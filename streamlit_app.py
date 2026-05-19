@@ -18,3 +18,7 @@ multi = '''Be yourself; and never surrender
 Two (or more) newline characters in a row will result in a hard return.
 '''
 st.markdown(multi)
+import streamlit as st
+
+number = st.number_input("Insert a number")
+st.write("The current number is ", number)
