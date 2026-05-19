@@ -6,16 +6,16 @@ st.write(
 )
 import streamlit as st
 
-st.markdown("*FIKRI* is **really** ***cool***.")
+st.markdown("*magali* itu **males** ***mandi***.")
 st.markdown('''
-    :red[FIKRI] :orange[can] :green[DO] :blue[ALL] :violet[ACTIVITY]
-    :gray[SO] :rainbow[EASY] and :blue-background[highlight] text.''')
-st.markdown("Here's a bouquet FOR FIKRI &mdash;\
+    :red[kita] :orange[semua] :green[gatau] :blue[kenapa] :violet[magali]
+    :gray[males] :rainbow[mandi] dan :blue-background[magali] mager.''')
+st.markdown("Here's a bouquet FOR magali si males mandi &mdash;\
             :tulip::cherry_blossom::rose::hibiscus::sunflower::blossom:")
 
-multi = '''Be yourself; and never surrender
+multi = '''mandi lah sebelum di mandikan
 
-Two (or more) newline characters in a row will result in a hard return.
+biarkan air yg menemuiku
 '''
 st.markdown(multi)
 import streamlit as st
