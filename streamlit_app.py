@@ -1,3 +1,10 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+import io
+
+st.set_page_config(page_title="Logbook Digital Praktikum Titrimetri", layout="wide")
+
 # Daftar alat yang tersedia
 INVENTORY = [
     "kaku takar 100 mL",
@@ -72,11 +79,12 @@ def returns_df():
             "waktu_kembali": r["waktu_kembali"],
             "kondisi": r["kondisi"],
         })
-        return pd.DataFrame(rows)
+    return pd.DataFrame(rows)
 
 # Sidebar: menu
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
+
 # Dashboard
 if page == "Dashboard":
     st.title("Logbook Digital Praktikum Titrimetri")
@@ -88,16 +96,17 @@ if page == "Dashboard":
             {"alat": k, "available": v["available"], "total": v["total"]}
             for k,v in st.session_state.inventory.items()
         ])
-        st.table(inv_table.set_index("alat")) 
-        with col2:
-            st.subheader("Aktivitas Terakhir")
+        st.table(inv_table.set_index("alat"))
+    with col2:
+        st.subheader("Aktivitas Terakhir")
         recent_loans = loans_df().sort_values("waktu_pinjam", ascending=False).head(5)
         recent_returns = returns_df().sort_values("waktu_kembali", ascending=False).head(5)
         st.markdown("Peminjaman terbaru")
         st.table(recent_loans if not recent_loans.empty else pd.DataFrame(["Belum ada peminjaman"]))
         st.markdown("Pengembalian terbaru")
         st.table(recent_returns if not recent_returns.empty else pd.DataFrame(["Belum ada pengembalian"]))
-        # Peminjaman
+
+# Peminjaman
 if page == "Peminjaman":
     st.title("Form Peminjaman Alat")
     with st.form("form_pinjam"):
@@ -111,7 +120,7 @@ if page == "Peminjaman":
             max_av = st.session_state.inventory[alat]["available"]
             qty = c.number_input(f"{alat} (tersedia {max_av})", min_value=0, max_value=max_av, value=0, step=1, key=f"pin_{alat}")
             if qty > 0:
-                 requested[alat] = int(qty)
+                requested[alat] = int(qty)
         tujuan = st.text_area("Tujuan / Praktikum (opsional)")
         submit = st.form_submit_button("Pinjam")
         if submit:
@@ -133,7 +142,7 @@ if page == "Peminjaman":
                         "items": requested,
                         "tujuan": tujuan,
                         "waktu_pinjam": now_str(),
-                        "status": "dipinjam", 
+                        "status": "dipinjam",
                     }
                     # kurangi stok
                     for alat, q in requested.items():
@@ -141,6 +150,7 @@ if page == "Peminjaman":
                     st.session_state.loans.append(loan)
                     st.success(f"Peminjaman dicatat (ID {loan_id}).")
                     st.info("Catat ID peminjaman untuk pengembalian nanti.")
+
 # Pengembalian
 if page == "Pengembalian":
     st.title("Form Pengembalian Alat")
@@ -152,7 +162,7 @@ if page == "Pengembalian":
         else:
             sel = st.selectbox("Pilih peminjaman", options=loan_options)
             selected_id = int(sel.split(" - ")[0])
-            loan = next(l for l in st.session_state.loans if l["loan_id"]==selected_id) 
+            loan = next(l for l in st.session_state.loans if l["loan_id"]==selected_id)
             st.markdown("Jika hanya sebagian dikembalikan, masukkan jumlah yang dikembalikan per alat.")
             returned = {}
             cols = st.columns(3)
@@ -187,6 +197,7 @@ if page == "Pengembalian":
                     }
                     st.session_state.returns.append(ret)
                     st.success(f"Pengembalian dicatat (Return ID {ret_id}).")
+
 # Log
 if page == "Log":
     st.title("Catatan Peminjaman & Pengembalian")
@@ -201,6 +212,7 @@ if page == "Log":
     df_all = pd.concat([df_loans, df_returns.rename(columns={"return_id":"loan_id","waktu_kembali":"waktu_pinjam","kondisi":"status"})], sort=False, ignore_index=True)
     if not df_all.empty:
         st.download_button("Unduh CSV (semua log)", df_all.to_csv(index=False), file_name="logbook_all.csv", mime="text/csv")
+
 # Edukasi
 if page == "Edukasi":
     st.title("Edukasi Alat Praktikum Titrimetri")
@@ -208,7 +220,7 @@ if page == "Edukasi":
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
     descriptions = {
-        "labu takar 100 mL": (
+        "kaku takar 100 mL": (
             "Botol atau labu ukur untuk menakar volume cairan secara presisi. " 
             "Gunakan pada permukaan datar, baca meniskus pada garis mata. "
             "Cuci bersih setelah digunakan."
@@ -224,9 +236,9 @@ if page == "Edukasi":
         "pipet tetes": "Untuk meneteskan indikator atau reagen sedikit demi sedikit; gunakan dengan hati-hati.",
         "kaca arloji": "Untuk menimbang atau menutup bejana kecil; bersihkan setelah penggunaan.",
         "tutup kaca": "Menutup bejana untuk mencegah kontaminasi atau penguapan.",
-        }
+    }
     tips = {
-        "labu takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
+        "kaku takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
         "buret": ["Bilas buret dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran sebelum mulai."],
         "erlenmeyer 250 mL": ["Pegang di bagian bawah saat menuang untuk stabilitas."],
     }
@@ -234,7 +246,8 @@ if page == "Edukasi":
     if alat in tips:
         st.markdown("Tips:")
         for t in tips[alat]:
-             st.write(f"- {t}")
+            st.write(f"- {t}")
+
 # Pengaturan
 if page == "Pengaturan":
     st.title("Pengaturan Sistem (Sederhana)")
@@ -245,7 +258,7 @@ if page == "Pengaturan":
         for alat in INVENTORY:
             val = st.number_input(f"Total {alat}", min_value=0, max_value=100, value=st.session_state.inventory[alat]["total"], key=f"set_{alat}")
             if val != st.session_state.inventory[alat]["total"]:
-                 # ubah total dan adjust available proporsional (jika available > new total set = new total)
+                # ubah total dan adjust available proporsional (jika available > new total set = new total)
                 diff = val - st.session_state.inventory[alat]["total"]
                 st.session_state.inventory[alat]["total"] = int(val)
                 st.session_state.inventory[alat]["available"] = max(0, min(st.session_state.inventory[alat]["available"] + diff, int(val)))
@@ -258,4 +271,4 @@ if page == "Pengaturan":
             for a in st.session_state.inventory:
                 st.session_state.inventory[a]["available"] = st.session_state.inventory[a]["total"]
             st.success("Data di-reset.")
-        st.success(f"### Hasil: {hasil}")
+            
