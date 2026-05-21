@@ -220,7 +220,7 @@ if page == "Edukasi":
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
     descriptions = {
-        "kaku takar 100 mL": (
+        "labu takar 100 mL": (
             "Botol atau labu ukur untuk menakar volume cairan secara presisi. " 
             "Gunakan pada permukaan datar, baca meniskus pada garis mata. "
             "Cuci bersih setelah digunakan."
