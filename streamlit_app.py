@@ -7,9 +7,9 @@ st.set_page_config(page_title="Logbook Digital Praktikum Titrimetri", layout="wi
 
 # Daftar alat yang tersedia
 INVENTORY = [
-    "kaku takar 100 mL",
+    "labu takar 100 mL",
     "buret",
-    "klamp",
+    "clamp",
     "erlenmeyer 250 mL",
     "corong kaca",
     "batang pengaduk",
