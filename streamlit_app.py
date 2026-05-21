@@ -238,7 +238,7 @@ if page == "Edukasi":
         "tutup kaca": "Menutup bejana untuk mencegah kontaminasi atau penguapan.",
     }
     tips = {
-        "kaku takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
+        "labu takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
         "buret": ["Bilas buret dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran sebelum mulai."],
         "erlenmeyer 250 mL": ["Pegang di bagian bawah saat menuang untuk stabilitas."],
     }
