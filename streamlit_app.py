@@ -152,7 +152,8 @@ if page == "Pengembalian":
         else:
             sel = st.selectbox("Pilih peminjaman", options=loan_options)
             selected_id = int(sel.split(" - ")[0])
-            loan = next(l for l in st.session_state.loans if l["loan_id"]==selected_id) st.markdown("Jika hanya sebagian dikembalikan, masukkan jumlah yang dikembalikan per alat.")
+            loan = next(l for l in st.session_state.loans if l["loan_id"]==selected_id) 
+            st.markdown("Jika hanya sebagian dikembalikan, masukkan jumlah yang dikembalikan per alat.")
             returned = {}
             cols = st.columns(3)
             for i, alat in enumerate(loan["items"].keys()):
