@@ -72,7 +72,7 @@ def returns_df():
             "waktu_kembali": r["waktu_kembali"],
             "kondisi": r["kondisi"],
         })
-         return pd.DataFrame(rows)
+        return pd.DataFrame(rows)
 
 # Sidebar: menu
 st.sidebar.title("Menu")
