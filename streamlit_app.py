@@ -229,7 +229,7 @@ if page == "Edukasi":
             "Alat untuk titrasi dengan skala graduasi dan kran di bawah. " 
             "Pasang dengan klamp, kosongkan udara dari kran sebelum titrasi, dan baca volume di bawah meniskus."
         ),
-        "klamp": "Digunakan untuk menjepit buret atau alat pada statif; pastikan terpasang kuat.",
+        "clamp": "Digunakan untuk menjepit buret atau alat pada statif; pastikan terpasang kuat.",
         "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi; bentuk kerucut memudahkan pengadukan tanpa tumpah.",
         "corong kaca": "Untuk pemindahan cairan atau filtrasi; gunakan kertas saring bila diperlukan.",
         "batang pengaduk": "Untuk mengaduk larutan selama titrasi agar reaksi berjalan homogen.",
