@@ -4,6 +4,48 @@ import sqlite3
 from datetime import datetime
 
 st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
+st.markdown(
+    """
+    <style>
+    .dashboard-box {
+        background-color: #E6E6FA;
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid #d8c9f0;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-title {
+        color: purple;
+        font-weight: 700;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-subtitle {
+        color: purple;
+        font-weight: 600;
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+
+    .stock-green {
+        color: green;
+        font-size: 16px;
+        margin-top: 0px;
+        margin-bottom: 8px;
+    }
+
+    .stock-red {
+        color: red;
+        font-size: 16px;
+        margin-top: 0px;
+        margin-bottom: 8px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 DB_FILE = "lab_logbook.db"
 ADMIN_PASSWORD = "kelompok 2"
