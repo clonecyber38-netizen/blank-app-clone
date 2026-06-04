@@ -32,7 +32,7 @@ if "next_damage_id" not in st.session_state:
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
 
-ADMIN_PASSWORD = "kelompok 2"
+ADMIN_PASSWORD = "poltekaka2026"
 
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
