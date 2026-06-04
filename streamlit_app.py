@@ -183,23 +183,35 @@ def check_availability(requested):
     conn.close()
     return True, "Ok"
 
+def total_stock_status_color(av):
+    return "green" if av > 0 else "red"
+
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.title("Logbook Digital Praktikum Laboratorium")
+    st.markdown("<h1 style='color:purple;'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Stok Alat")
-        st.dataframe(get_inventory_df(), use_container_width=True)
+        st.markdown("<h3 style='color:purple;'>Stok Alat</h3>", unsafe_allow_html=True)
+        inv = get_inventory_df()
+        for _, row in inv.iterrows():
+            warna = total_stock_status_color(int(row["available"]))
+            st.markdown(
+                f"<p style='color:purple; font-size:18px; margin-bottom:4px;'>Total {row['alat']}</p>"
+                f"<p style='color:{warna}; font-size:16px; margin-top:0;'>"
+                f"Stok: {int(row['available'])} / {int(row['total'])}"
+                f"</p>",
+                unsafe_allow_html=True
+            )
 
     with col2:
-        st.subheader("Aktivitas Terakhir")
-        st.markdown("Peminjaman terbaru")
+        st.markdown("<h3 style='color:purple;'>Aktivitas Terakhir</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='color:purple;'><b>Peminjaman terbaru</b></p>", unsafe_allow_html=True)
         st.dataframe(get_loans_df().head(5), use_container_width=True)
-        st.markdown("Pengembalian terbaru")
+        st.markdown("<p style='color:purple;'><b>Pengembalian terbaru</b></p>", unsafe_allow_html=True)
         st.dataframe(get_returns_df().head(5), use_container_width=True)
 
 if page == "Peminjaman":
@@ -236,10 +248,7 @@ if page == "Peminjaman":
                     conn = get_conn()
                     cur = conn.cursor()
                     for alat, q in requested.items():
-                        cur.execute(
-                            "UPDATE inventory SET available = available - ? WHERE item_name = ?",
-                            (q, alat)
-                        )
+                        cur.execute("UPDATE inventory SET available = available - ? WHERE item_name = ?", (q, alat))
                     cur.execute(
                         "INSERT INTO loans (nama, nim, items, tujuan, waktu_pinjam, status) VALUES (?, ?, ?, ?, ?, ?)",
                         (nama, nim, str(requested), tujuan, now_str(), "dipinjam")
@@ -298,10 +307,7 @@ if page == "Pengembalian":
                     conn = get_conn()
                     cur = conn.cursor()
                     for alat, q in returned.items():
-                        cur.execute(
-                            "UPDATE inventory SET available = available + ? WHERE item_name = ?",
-                            (q, alat)
-                        )
+                        cur.execute("UPDATE inventory SET available = available + ? WHERE item_name = ?", (q, alat))
                         items[alat] -= q
 
                     if all(v == 0 for v in items.values()):
