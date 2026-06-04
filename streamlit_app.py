@@ -1,9 +1,13 @@
 import streamlit as st
 import pandas as pd
+import sqlite3
 from datetime import datetime
-import io
+import os
 
 st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
+
+DB_FILE = "lab_logbook.db"
+ADMIN_PASSWORD = "kelompok 2"
 
 INVENTORY = [
     "labu takar 100 mL",
@@ -31,83 +35,156 @@ INVENTORY = [
     "rak tabung reaksi",
 ]
 
-ADMIN_PASSWORD = "kelompok 2"
-
-if "inventory" not in st.session_state:
-    st.session_state.inventory = {a: {"total": 5, "available": 5} for a in INVENTORY}
-if "loans" not in st.session_state:
-    st.session_state.loans = []
-if "returns" not in st.session_state:
-    st.session_state.returns = []
-if "damages" not in st.session_state:
-    st.session_state.damages = []
-if "next_loan_id" not in st.session_state:
-    st.session_state.next_loan_id = 1
-if "next_damage_id" not in st.session_state:
-    st.session_state.next_damage_id = 1
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
 
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def check_availability(requested):
-    for alat, qty in requested.items():
-        if qty <= 0:
-            return False, f"Jumlah untuk '{alat}' harus > 0."
-        if alat not in st.session_state.inventory:
-            return False, f"Alat '{alat}' tidak dikenal."
-        if qty > st.session_state.inventory[alat]["available"]:
-            return False, f"Stok '{alat}' tidak cukup (tersedia {st.session_state.inventory[alat]['available']})."
-    return True, "Ok"
+def get_conn():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def loans_df():
-    if not st.session_state.loans:
-        return pd.DataFrame(columns=["loan_id", "nama", "nim", "alat", "jumlah", "waktu_pinjam", "status"])
+def init_db():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS inventory (
+        item_name TEXT PRIMARY KEY,
+        total INTEGER NOT NULL,
+        available INTEGER NOT NULL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS loans (
+        loan_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT NOT NULL,
+        nim TEXT NOT NULL,
+        items TEXT NOT NULL,
+        tujuan TEXT,
+        waktu_pinjam TEXT NOT NULL,
+        status TEXT NOT NULL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS returns (
+        return_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        loan_id INTEGER NOT NULL,
+        nama TEXT NOT NULL,
+        items TEXT NOT NULL,
+        waktu_kembali TEXT NOT NULL,
+        kondisi TEXT NOT NULL
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS damages (
+        damage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tanggal TEXT NOT NULL,
+        nama TEXT NOT NULL,
+        alat TEXT NOT NULL,
+        jumlah INTEGER NOT NULL,
+        kondisi TEXT NOT NULL,
+        keterangan TEXT NOT NULL
+    )
+    """)
+
+    for item in INVENTORY:
+        cur.execute("SELECT item_name FROM inventory WHERE item_name = ?", (item,))
+        if cur.fetchone() is None:
+            cur.execute(
+                "INSERT INTO inventory (item_name, total, available) VALUES (?, ?, ?)",
+                (item, 5, 5)
+            )
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def get_inventory_df():
+    conn = get_conn()
+    df = pd.read_sql_query("SELECT item_name AS alat, total, available FROM inventory", conn)
+    conn.close()
+    return df
+
+def update_inventory_item(item_name, total, available):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE inventory SET total = ?, available = ? WHERE item_name = ?",
+        (int(total), int(available), item_name)
+    )
+    conn.commit()
+    conn.close()
+
+def get_loans_df():
+    conn = get_conn()
+    df = pd.read_sql_query("SELECT * FROM loans ORDER BY loan_id DESC", conn)
+    conn.close()
+    if df.empty:
+        return pd.DataFrame(columns=["loan_id", "nama", "nim", "alat", "jumlah", "tujuan", "waktu_pinjam", "status"])
     rows = []
-    for loan in st.session_state.loans:
+    for _, r in df.iterrows():
+        items = eval(r["items"])
         rows.append({
-            "loan_id": loan["loan_id"],
-            "nama": loan["nama"],
-            "nim": loan["nim"],
-            "alat": ", ".join([f'{k} x{v}' for k, v in loan["items"].items()]),
-            "jumlah": sum(loan["items"].values()),
-            "waktu_pinjam": loan["waktu_pinjam"],
-            "status": loan["status"],
+            "loan_id": r["loan_id"],
+            "nama": r["nama"],
+            "nim": r["nim"],
+            "alat": ", ".join([f"{k} x{v}" for k, v in items.items()]),
+            "jumlah": sum(items.values()),
+            "tujuan": r["tujuan"],
+            "waktu_pinjam": r["waktu_pinjam"],
+            "status": r["status"],
         })
     return pd.DataFrame(rows)
 
-def returns_df():
-    if not st.session_state.returns:
+def get_returns_df():
+    conn = get_conn()
+    df = pd.read_sql_query("SELECT * FROM returns ORDER BY return_id DESC", conn)
+    conn.close()
+    if df.empty:
         return pd.DataFrame(columns=["return_id", "loan_id", "nama", "alat", "jumlah", "waktu_kembali", "kondisi"])
     rows = []
-    for r in st.session_state.returns:
+    for _, r in df.iterrows():
+        items = eval(r["items"])
         rows.append({
             "return_id": r["return_id"],
             "loan_id": r["loan_id"],
             "nama": r["nama"],
-            "alat": ", ".join([f'{k} x{v}' for k, v in r["items"].items()]),
-            "jumlah": sum(r["items"].values()),
+            "alat": ", ".join([f"{k} x{v}" for k, v in items.items()]),
+            "jumlah": sum(items.values()),
             "waktu_kembali": r["waktu_kembali"],
             "kondisi": r["kondisi"],
         })
     return pd.DataFrame(rows)
 
-def damages_df():
-    if not st.session_state.damages:
+def get_damages_df():
+    conn = get_conn()
+    df = pd.read_sql_query("SELECT * FROM damages ORDER BY damage_id DESC", conn)
+    conn.close()
+    if df.empty:
         return pd.DataFrame(columns=["damage_id", "tanggal", "nama", "alat", "jumlah", "kondisi", "keterangan"])
-    rows = []
-    for d in st.session_state.damages:
-        rows.append({
-            "damage_id": d["damage_id"],
-            "tanggal": d["tanggal"],
-            "nama": d["nama"],
-            "alat": d["alat"],
-            "jumlah": d["jumlah"],
-            "kondisi": d["kondisi"],
-            "keterangan": d["keterangan"],
-        })
-    return pd.DataFrame(rows)
+    return df.rename(columns={"alat": "alat"})
+
+def check_availability(requested):
+    conn = get_conn()
+    cur = conn.cursor()
+    for alat, qty in requested.items():
+        cur.execute("SELECT available FROM inventory WHERE item_name = ?", (alat,))
+        row = cur.fetchone()
+        if row is None:
+            conn.close()
+            return False, f"Alat '{alat}' tidak dikenal."
+        if qty > row["available"]:
+            conn.close()
+            return False, f"Stok '{alat}' tidak cukup (tersedia {row['available']})."
+    conn.close()
+    return True, "Ok"
 
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
@@ -116,37 +193,37 @@ if page == "Dashboard":
     st.title("Logbook Digital Praktikum Laboratorium")
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
     col1, col2 = st.columns(2)
+
     with col1:
-        st.subheader("Stok Alat (tersedia / total)")
-        inv_table = pd.DataFrame([
-            {"alat": k, "available": v["available"], "total": v["total"]}
-            for k, v in st.session_state.inventory.items()
-        ])
-        st.dataframe(inv_table, use_container_width=True)
+        st.subheader("Stok Alat")
+        st.dataframe(get_inventory_df(), use_container_width=True)
+
     with col2:
         st.subheader("Aktivitas Terakhir")
-        recent_loans = loans_df().sort_values("waktu_pinjam", ascending=False).head(5)
-        recent_returns = returns_df().sort_values("waktu_kembali", ascending=False).head(5)
         st.markdown("Peminjaman terbaru")
-        st.dataframe(recent_loans if not recent_loans.empty else pd.DataFrame([["Belum ada peminjaman"]]), use_container_width=True)
+        st.dataframe(get_loans_df().head(5), use_container_width=True)
         st.markdown("Pengembalian terbaru")
-        st.dataframe(recent_returns if not recent_returns.empty else pd.DataFrame([["Belum ada pengembalian"]]), use_container_width=True)
+        st.dataframe(get_returns_df().head(5), use_container_width=True)
 
 if page == "Peminjaman":
     st.title("Form Peminjaman Alat")
     with st.form("form_pinjam"):
         nama = st.text_input("Nama lengkap")
         nim = st.text_input("NIM / ID")
+        tujuan = st.text_area("Tujuan / Praktikum (opsional)")
+
         st.markdown("Pilih alat dan jumlah yang ingin dipinjam:")
-        cols = st.columns(3)
+        inv = get_inventory_df()
         requested = {}
+        cols = st.columns(3)
         for i, alat in enumerate(INVENTORY):
             c = cols[i % 3]
-            max_av = st.session_state.inventory[alat]["available"]
+            row = inv[inv["alat"] == alat]
+            max_av = int(row["available"].iloc[0]) if not row.empty else 0
             qty = c.number_input(f"{alat} (tersedia {max_av})", min_value=0, max_value=max_av, value=0, step=1, key=f"pin_{alat}")
             if qty > 0:
                 requested[alat] = int(qty)
-        tujuan = st.text_area("Tujuan / Praktikum (opsional)")
+
         submit = st.form_submit_button("Pinjam")
         if submit:
             if not nama or not nim:
@@ -158,43 +235,50 @@ if page == "Peminjaman":
                 if not ok:
                     st.error(msg)
                 else:
-                    loan_id = st.session_state.next_loan_id
-                    st.session_state.next_loan_id += 1
-                    loan = {
-                        "loan_id": loan_id,
-                        "nama": nama,
-                        "nim": nim,
-                        "items": requested,
-                        "tujuan": tujuan,
-                        "waktu_pinjam": now_str(),
-                        "status": "dipinjam",
-                    }
+                    conn = get_conn()
+                    cur = conn.cursor()
                     for alat, q in requested.items():
-                        st.session_state.inventory[alat]["available"] -= q
-                    st.session_state.loans.append(loan)
-                    st.success(f"Peminjaman dicatat (ID {loan_id}).")
-                    st.info("Catat ID peminjaman untuk pengembalian nanti.")
+                        cur.execute(
+                            "UPDATE inventory SET available = available - ? WHERE item_name = ?",
+                            (q, alat)
+                        )
+                    cur.execute(
+                        "INSERT INTO loans (nama, nim, items, tujuan, waktu_pinjam, status) VALUES (?, ?, ?, ?, ?, ?)",
+                        (nama, nim, str(requested), tujuan, now_str(), "dipinjam")
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("Peminjaman dicatat.")
+                    st.info("Data peminjaman ini akan terlihat oleh pengguna lain di halaman Log.")
 
 if page == "Pengembalian":
     st.title("Form Pengembalian Alat")
-    with st.form("form_kembali"):
-        st.markdown("Pilih ID peminjaman yang akan dikembalikan:")
-        loan_options = [
-            f'{l["loan_id"]} - {l["nama"]} ({l["nim"]}) - {", ".join([f"{k}x{v}" for k, v in l["items"].items()])}'
-            for l in st.session_state.loans if l["status"] == "dipinjam"
-        ]
-        if not loan_options:
-            st.info("Tidak ada peminjaman aktif saat ini.")
-        else:
-            sel = st.selectbox("Pilih peminjaman", options=loan_options)
+    loans_df = get_loans_df()
+    active_loans = loans_df[loans_df["status"] == "dipinjam"]
+
+    if active_loans.empty:
+        st.info("Tidak ada peminjaman aktif saat ini.")
+    else:
+        with st.form("form_kembali"):
+            options = active_loans.apply(
+                lambda r: f'{r["loan_id"]} - {r["nama"]} ({r["nim"]}) - {r["alat"]}',
+                axis=1
+            ).tolist()
+            sel = st.selectbox("Pilih peminjaman", options=options)
             selected_id = int(sel.split(" - ")[0])
-            loan = next(l for l in st.session_state.loans if l["loan_id"] == selected_id)
-            st.markdown("Jika hanya sebagian dikembalikan, masukkan jumlah yang dikembalikan per alat.")
+
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM loans WHERE loan_id = ?", (selected_id,))
+            loan_row = cur.fetchone()
+            conn.close()
+
+            items = eval(loan_row["items"])
             returned = {}
             cols = st.columns(3)
-            for i, alat in enumerate(loan["items"].keys()):
+            for i, alat in enumerate(items.keys()):
                 c = cols[i % 3]
-                max_return = loan["items"][alat]
+                max_return = items[alat]
                 qty = c.number_input(
                     f"{alat} (maks {max_return})",
                     min_value=0,
@@ -205,28 +289,36 @@ if page == "Pengembalian":
                 )
                 if qty > 0:
                     returned[alat] = int(qty)
+
             kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"])
             submit_ret = st.form_submit_button("Kembalikan")
+
             if submit_ret:
                 if not returned:
                     st.error("Pilih minimal satu alat yang dikembalikan.")
                 else:
+                    conn = get_conn()
+                    cur = conn.cursor()
                     for alat, q in returned.items():
-                        st.session_state.inventory[alat]["available"] += q
-                        loan["items"][alat] -= q
-                    if all(v == 0 for v in loan["items"].values()):
-                        loan["status"] = "dikembalikan"
-                    ret_id = len(st.session_state.returns) + 1
-                    ret = {
-                        "return_id": ret_id,
-                        "loan_id": selected_id,
-                        "nama": loan["nama"],
-                        "items": returned,
-                        "waktu_kembali": now_str(),
-                        "kondisi": kondisi,
-                    }
-                    st.session_state.returns.append(ret)
-                    st.success(f"Pengembalian dicatat (Return ID {ret_id}).")
+                        cur.execute(
+                            "UPDATE inventory SET available = available + ? WHERE item_name = ?",
+                            (q, alat)
+                        )
+                        items[alat] -= q
+
+                    if all(v == 0 for v in items.values()):
+                        cur.execute("UPDATE loans SET status = ? WHERE loan_id = ?", ("dikembalikan", selected_id))
+                    else:
+                        cur.execute("UPDATE loans SET items = ? WHERE loan_id = ?", (str(items), selected_id))
+
+                    cur.execute(
+                        "INSERT INTO returns (loan_id, nama, items, waktu_kembali, kondisi) VALUES (?, ?, ?, ?, ?)",
+                        (selected_id, loan_row["nama"], str(returned), now_str(), kondisi)
+                    )
+
+                    conn.commit()
+                    conn.close()
+                    st.success("Pengembalian dicatat.")
 
 if page == "Log":
     st.title("Catatan Peminjaman, Pengembalian, dan Kerusakan")
@@ -234,13 +326,11 @@ if page == "Log":
 
     with tab1:
         st.subheader("Peminjaman")
-        df_loans = loans_df()
-        st.dataframe(df_loans.sort_values("waktu_pinjam", ascending=False), use_container_width=True)
+        st.dataframe(get_loans_df(), use_container_width=True)
 
     with tab2:
         st.subheader("Pengembalian")
-        df_returns = returns_df()
-        st.dataframe(df_returns.sort_values("waktu_kembali", ascending=False), use_container_width=True)
+        st.dataframe(get_returns_df(), use_container_width=True)
 
     with tab3:
         st.subheader("Catat Alat Rusak")
@@ -251,29 +341,25 @@ if page == "Log":
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
             keterangan = st.text_area("Keterangan kerusakan")
             submit_rusak = st.form_submit_button("Simpan Kerusakan")
+
             if submit_rusak:
-                damage_id = st.session_state.next_damage_id
-                st.session_state.next_damage_id += 1
-                damage = {
-                    "damage_id": damage_id,
-                    "tanggal": now_str(),
-                    "nama": nama if nama else "-",
-                    "alat": alat_rusak,
-                    "jumlah": int(jumlah_rusak),
-                    "kondisi": kondisi,
-                    "keterangan": keterangan if keterangan else "-",
-                }
-                st.session_state.damages.append(damage)
-                st.success(f"Kerusakan alat berhasil dicatat (ID {damage_id}).")
+                conn = get_conn()
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO damages (tanggal, nama, alat, jumlah, kondisi, keterangan) VALUES (?, ?, ?, ?, ?, ?)",
+                    (now_str(), nama if nama else "-", alat_rusak, int(jumlah_rusak), kondisi, keterangan if keterangan else "-")
+                )
+                conn.commit()
+                conn.close()
+                st.success("Kerusakan alat berhasil dicatat.")
 
         st.subheader("Daftar Alat Rusak")
-        df_damages = damages_df()
-        st.dataframe(df_damages.sort_values("tanggal", ascending=False), use_container_width=True)
+        st.dataframe(get_damages_df(), use_container_width=True)
 
     st.markdown("### Ekspor log")
-    df_loans = loans_df()
-    df_returns = returns_df()
-    df_damages = damages_df()
+    df_loans = get_loans_df()
+    df_returns = get_returns_df()
+    df_damages = get_damages_df()
 
     if not df_loans.empty:
         st.download_button("Unduh CSV Peminjaman", df_loans.to_csv(index=False), file_name="log_peminjaman.csv", mime="text/csv")
@@ -313,19 +399,8 @@ if page == "Edukasi":
         "tabung reaksi": "Wadah reaksi skala kecil.",
         "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
-    tips = {
-        "labu takar 100 mL": ["Jangan digunakan untuk pemanasan.", "Bersihkan setelah dipakai."],
-        "buret": ["Bilas dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran."],
-        "pipet volumetrik 25 mL": ["Gunakan bulb, jangan hisap dengan mulut.", "Baca meniskus sejajar mata."],
-        "pipet volumetrik 50 mL": ["Gunakan bulb, jangan hisap dengan mulut.", "Baca meniskus sejajar mata."],
-        "bunsen": ["Jauhkan dari bahan mudah terbakar.", "Matikan setelah selesai."],
-        "tabung reaksi": ["Gunakan penjepit bila dipanaskan.", "Arahkan mulut tabung menjauh dari wajah."],
-    }
+
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
-    if alat in tips:
-        st.markdown("Tips:")
-        for t in tips[alat]:
-            st.write(f"- {t}")
 
 if page == "Pengaturan":
     st.title("Pengaturan Sistem")
@@ -343,33 +418,37 @@ if page == "Pengaturan":
         st.warning("Akses pengaturan terkunci.")
     else:
         st.success("Akses pengaturan berhasil dibuka.")
+        inv = get_inventory_df()
 
         cols = st.columns([2, 1])
         with cols[0]:
             st.subheader("Atur stok tiap alat")
             for alat in INVENTORY:
+                row = inv[inv["alat"] == alat]
+                current_total = int(row["total"].iloc[0]) if not row.empty else 0
+                current_avail = int(row["available"].iloc[0]) if not row.empty else 0
                 val = st.number_input(
                     f"Total {alat}",
                     min_value=0,
                     max_value=100,
-                    value=st.session_state.inventory[alat]["total"],
+                    value=current_total,
                     key=f"set_{alat}"
                 )
-                if val != st.session_state.inventory[alat]["total"]:
-                    diff = val - st.session_state.inventory[alat]["total"]
-                    st.session_state.inventory[alat]["total"] = int(val)
-                    st.session_state.inventory[alat]["available"] = max(
-                        0, min(st.session_state.inventory[alat]["available"] + diff, int(val))
-                    )
+                if val != current_total:
+                    diff = int(val) - current_total
+                    new_available = max(0, min(current_avail + diff, int(val)))
+                    update_inventory_item(alat, int(val), new_available)
 
         with cols[1]:
             st.subheader("Reset data")
             if st.button("Reset semua log"):
-                st.session_state.loans = []
-                st.session_state.returns = []
-                st.session_state.damages = []
-                st.session_state.next_loan_id = 1
-                st.session_state.next_damage_id = 1
-                for a in st.session_state.inventory:
-                    st.session_state.inventory[a]["available"] = st.session_state.inventory[a]["total"]
+                conn = get_conn()
+                cur = conn.cursor()
+                cur.execute("DELETE FROM loans")
+                cur.execute("DELETE FROM returns")
+                cur.execute("DELETE FROM damages")
+                for item in INVENTORY:
+                    cur.execute("UPDATE inventory SET total = 5, available = 5 WHERE item_name = ?", (item,))
+                conn.commit()
+                conn.close()
                 st.success("Data di-reset.")
