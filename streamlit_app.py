@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 from datetime import datetime
-import os
 
 st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
 
@@ -108,7 +107,7 @@ init_db()
 
 def get_inventory_df():
     conn = get_conn()
-    df = pd.read_sql_query("SELECT item_name AS alat, total, available FROM inventory", conn)
+    df = pd.read_sql_query("SELECT item_name AS alat, total, available FROM inventory ORDER BY item_name", conn)
     conn.close()
     return df
 
@@ -167,9 +166,7 @@ def get_damages_df():
     conn = get_conn()
     df = pd.read_sql_query("SELECT * FROM damages ORDER BY damage_id DESC", conn)
     conn.close()
-    if df.empty:
-        return pd.DataFrame(columns=["damage_id", "tanggal", "nama", "alat", "jumlah", "kondisi", "keterangan"])
-    return df.rename(columns={"alat": "alat"})
+    return df
 
 def check_availability(requested):
     conn = get_conn()
@@ -216,6 +213,7 @@ if page == "Peminjaman":
         inv = get_inventory_df()
         requested = {}
         cols = st.columns(3)
+
         for i, alat in enumerate(INVENTORY):
             c = cols[i % 3]
             row = inv[inv["alat"] == alat]
@@ -345,13 +343,26 @@ if page == "Log":
             if submit_rusak:
                 conn = get_conn()
                 cur = conn.cursor()
+
+                cur.execute("SELECT available FROM inventory WHERE item_name = ?", (alat_rusak,))
+                row = cur.fetchone()
+                available_now = row["available"] if row else 0
+                jumlah_simpan = min(int(jumlah_rusak), available_now)
+
                 cur.execute(
                     "INSERT INTO damages (tanggal, nama, alat, jumlah, kondisi, keterangan) VALUES (?, ?, ?, ?, ?, ?)",
-                    (now_str(), nama if nama else "-", alat_rusak, int(jumlah_rusak), kondisi, keterangan if keterangan else "-")
+                    (now_str(), nama if nama else "-", alat_rusak, jumlah_simpan, kondisi, keterangan if keterangan else "-")
                 )
+
+                cur.execute(
+                    "UPDATE inventory SET available = available - ? WHERE item_name = ?",
+                    (jumlah_simpan, alat_rusak)
+                )
+
                 conn.commit()
                 conn.close()
-                st.success("Kerusakan alat berhasil dicatat.")
+                st.success("Kerusakan alat berhasil dicatat, stok di Dashboard sudah berkurang.")
+                st.rerun()
 
         st.subheader("Daftar Alat Rusak")
         st.dataframe(get_damages_df(), use_container_width=True)
