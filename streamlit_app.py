@@ -232,29 +232,31 @@ st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.markdown("<h1 style='color:purple;'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-box">', unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-title">Logbook Digital Praktikum Laboratorium</div>', unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("<h3 style='color:purple;'>Stok Alat</h3>", unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-subtitle">Stok Alat</div>', unsafe_allow_html=True)
         inv = get_inventory_df()
         for _, row in inv.iterrows():
-            warna = total_stock_status_color(int(row["available"]))
+            warna = "green" if int(row["available"]) > 0 else "red"
             st.markdown(
                 f"<p style='color:purple; font-size:18px; margin-bottom:4px;'>Total {row['alat']}</p>"
-                f"<p style='color:{warna}; font-size:16px; margin-top:0;'>"
-                f"Stok: {int(row['available'])} / {int(row['total'])}"
-                f"</p>",
+                f"<p style='color:{warna}; font-size:16px; margin-top:0;'>Stok: {int(row['available'])} / {int(row['total'])}</p>",
                 unsafe_allow_html=True
             )
 
     with col2:
-        st.markdown("<h3 style='color:purple;'>Aktivitas Terakhir</h3>", unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-subtitle">Aktivitas Terakhir</div>', unsafe_allow_html=True)
         st.markdown("<p style='color:purple;'><b>Peminjaman terbaru</b></p>", unsafe_allow_html=True)
         st.dataframe(get_loans_df().head(5), use_container_width=True)
         st.markdown("<p style='color:purple;'><b>Pengembalian terbaru</b></p>", unsafe_allow_html=True)
         st.dataframe(get_returns_df().head(5), use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if page == "Peminjaman":
     st.title("Form Peminjaman Alat")
