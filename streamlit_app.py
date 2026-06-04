@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import io
 
 st.set_page_config(page_title="Logbook Digital Praktikum Titrimetri", layout="wide")
 
@@ -16,10 +17,6 @@ INVENTORY = [
     "tutup kaca",
 ]
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "username_login" not in st.session_state:
-    st.session_state.username_login = ""
 if "inventory" not in st.session_state:
     st.session_state.inventory = {a: {"total": 5, "available": 5} for a in INVENTORY}
 if "loans" not in st.session_state:
@@ -32,23 +29,13 @@ if "next_loan_id" not in st.session_state:
     st.session_state.next_loan_id = 1
 if "next_damage_id" not in st.session_state:
     st.session_state.next_damage_id = 1
+if "settings_unlocked" not in st.session_state:
+    st.session_state.settings_unlocked = False
+
+ADMIN_PASSWORD = "kelompok 2"
 
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-def login_form():
-    st.sidebar.subheader("Login Admin")
-    with st.sidebar.form("login_form"):
-        user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
-        if submit:
-            if user == "admin" and pwd == "1234":
-                st.session_state.logged_in = True
-                st.session_state.username_login = user
-                st.success("Login berhasil.")
-            else:
-                st.error("Username atau password salah.")
 
 def check_availability(requested):
     for alat, qty in requested.items():
@@ -108,17 +95,6 @@ def damages_df():
         })
     return pd.DataFrame(rows)
 
-login_form()
-if not st.session_state.logged_in:
-    st.warning("Silakan login untuk melihat dan mengelola data.")
-    st.stop()
-
-st.sidebar.success(f"Login sebagai: {st.session_state.username_login}")
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.session_state.username_login = ""
-    st.rerun()
-
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
@@ -132,20 +108,20 @@ if page == "Dashboard":
             {"alat": k, "available": v["available"], "total": v["total"]}
             for k, v in st.session_state.inventory.items()
         ])
-        st.dataframe(inv_table, use_container_width=True)
+        st.table(inv_table.set_index("alat"))
     with col2:
         st.subheader("Aktivitas Terakhir")
         recent_loans = loans_df().sort_values("waktu_pinjam", ascending=False).head(5)
         recent_returns = returns_df().sort_values("waktu_kembali", ascending=False).head(5)
         st.markdown("Peminjaman terbaru")
-        st.dataframe(recent_loans, use_container_width=True)
+        st.dataframe(recent_loans if not recent_loans.empty else pd.DataFrame([["Belum ada peminjaman"]]), use_container_width=True)
         st.markdown("Pengembalian terbaru")
-        st.dataframe(recent_returns, use_container_width=True)
+        st.dataframe(recent_returns if not recent_returns.empty else pd.DataFrame([["Belum ada pengembalian"]]), use_container_width=True)
 
 if page == "Peminjaman":
     st.title("Form Peminjaman Alat")
     with st.form("form_pinjam"):
-        nama = st.text_input("Nama lengkap peminjam")
+        nama = st.text_input("Nama lengkap")
         nim = st.text_input("NIM / ID")
         st.markdown("Pilih alat dan jumlah yang ingin dipinjam:")
         cols = st.columns(3)
@@ -183,10 +159,12 @@ if page == "Peminjaman":
                         st.session_state.inventory[alat]["available"] -= q
                     st.session_state.loans.append(loan)
                     st.success(f"Peminjaman dicatat (ID {loan_id}).")
+                    st.info("Catat ID peminjaman untuk pengembalian nanti.")
 
 if page == "Pengembalian":
     st.title("Form Pengembalian Alat")
     with st.form("form_kembali"):
+        st.markdown("Pilih ID peminjaman yang akan dikembalikan:")
         loan_options = [
             f'{l["loan_id"]} - {l["nama"]} ({l["nim"]}) - {", ".join([f"{k}x{v}" for k, v in l["items"].items()])}'
             for l in st.session_state.loans if l["status"] == "dipinjam"
@@ -197,12 +175,20 @@ if page == "Pengembalian":
             sel = st.selectbox("Pilih peminjaman", options=loan_options)
             selected_id = int(sel.split(" - ")[0])
             loan = next(l for l in st.session_state.loans if l["loan_id"] == selected_id)
+            st.markdown("Jika hanya sebagian dikembalikan, masukkan jumlah yang dikembalikan per alat.")
             returned = {}
             cols = st.columns(3)
             for i, alat in enumerate(loan["items"].keys()):
                 c = cols[i % 3]
                 max_return = loan["items"][alat]
-                qty = c.number_input(f"{alat} (maks {max_return})", min_value=0, max_value=max_return, value=max_return, step=1, key=f"ret_{selected_id}_{alat}")
+                qty = c.number_input(
+                    f"{alat} (maks {max_return})",
+                    min_value=0,
+                    max_value=max_return,
+                    value=max_return,
+                    step=1,
+                    key=f"ret_{selected_id}_{alat}"
+                )
                 if qty > 0:
                     returned[alat] = int(qty)
             kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"])
@@ -217,19 +203,21 @@ if page == "Pengembalian":
                     if all(v == 0 for v in loan["items"].values()):
                         loan["status"] = "dikembalikan"
                     ret_id = len(st.session_state.returns) + 1
-                    st.session_state.returns.append({
+                    ret = {
                         "return_id": ret_id,
                         "loan_id": selected_id,
                         "nama": loan["nama"],
                         "items": returned,
                         "waktu_kembali": now_str(),
                         "kondisi": kondisi,
-                    })
+                    }
+                    st.session_state.returns.append(ret)
                     st.success(f"Pengembalian dicatat (Return ID {ret_id}).")
 
 if page == "Log":
     st.title("Catatan Peminjaman, Pengembalian, dan Kerusakan")
-    tab1, tab2, tab3, tab4 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan", "Sedang Meminjam"])
+
+    tab1, tab2, tab3 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan"])
 
     with tab1:
         st.subheader("Peminjaman")
@@ -250,10 +238,11 @@ if page == "Log":
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
             keterangan = st.text_area("Keterangan kerusakan")
             submit_rusak = st.form_submit_button("Simpan Kerusakan")
+
             if submit_rusak:
                 damage_id = st.session_state.next_damage_id
                 st.session_state.next_damage_id += 1
-                st.session_state.damages.append({
+                damage = {
                     "damage_id": damage_id,
                     "tanggal": now_str(),
                     "nama": nama if nama else "-",
@@ -261,25 +250,58 @@ if page == "Log":
                     "jumlah": int(jumlah_rusak),
                     "kondisi": kondisi,
                     "keterangan": keterangan if keterangan else "-",
-                })
+                }
+                st.session_state.damages.append(damage)
                 st.success(f"Kerusakan alat berhasil dicatat (ID {damage_id}).")
+
         st.subheader("Daftar Alat Rusak")
         df_damages = damages_df()
         st.dataframe(df_damages.sort_values("tanggal", ascending=False), use_container_width=True)
 
-    with tab4:
-        st.subheader("Teman yang Sedang Meminjam")
-        df_loans = loans_df()
-        aktif = df_loans[df_loans["status"] == "dipinjam"] if not df_loans.empty else df_loans
-        st.dataframe(aktif, use_container_width=True)
+    st.markdown("### Ekspor log")
+    df_loans = loans_df()
+    df_returns = returns_df()
+    df_damages = damages_df()
+
+    if not df_loans.empty:
+        st.download_button(
+            "Unduh CSV Peminjaman",
+            df_loans.to_csv(index=False),
+            file_name="log_peminjaman.csv",
+            mime="text/csv"
+        )
+
+    if not df_returns.empty:
+        st.download_button(
+            "Unduh CSV Pengembalian",
+            df_returns.to_csv(index=False),
+            file_name="log_pengembalian.csv",
+            mime="text/csv"
+        )
+
+    if not df_damages.empty:
+        st.download_button(
+            "Unduh CSV Kerusakan",
+            df_damages.to_csv(index=False),
+            file_name="log_kerusakan.csv",
+            mime="text/csv"
+        )
 
 if page == "Edukasi":
     st.title("Edukasi Alat Praktikum Titrimetri")
+    st.markdown("Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.")
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
     descriptions = {
-        "labu takar 100 mL": "Botol atau labu ukur untuk menakar volume cairan secara presisi. Gunakan pada permukaan datar, baca meniskus pada garis mata. Cuci bersih setelah digunakan.",
-        "buret": "Alat untuk titrasi dengan skala graduasi dan kran di bawah. Pasang dengan klamp, kosongkan udara dari kran sebelum titrasi, dan baca volume di bawah meniskus.",
+        "labu takar 100 mL": (
+            "Botol atau labu ukur untuk menakar volume cairan secara presisi. "
+            "Gunakan pada permukaan datar, baca meniskus pada garis mata. "
+            "Cuci bersih setelah digunakan."
+        ),
+        "buret": (
+            "Alat untuk titrasi dengan skala graduasi dan kran di bawah. "
+            "Pasang dengan klamp, kosongkan udara dari kran sebelum titrasi, dan baca volume di bawah meniskus."
+        ),
         "klamp": "Digunakan untuk menjepit buret atau alat pada statif; pastikan terpasang kuat.",
         "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi; bentuk kerucut memudahkan pengadukan tanpa tumpah.",
         "corong kaca": "Untuk pemindahan cairan atau filtrasi; gunakan kertas saring bila diperlukan.",
@@ -288,28 +310,60 @@ if page == "Edukasi":
         "kaca arloji": "Untuk menimbang atau menutup bejana kecil; bersihkan setelah penggunaan.",
         "tutup kaca": "Menutup bejana untuk mencegah kontaminasi atau penguapan.",
     }
+    tips = {
+        "labu takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
+        "buret": ["Bilas buret dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran sebelum mulai."],
+        "erlenmeyer 250 mL": ["Pegang di bagian bawah saat menuang untuk stabilitas."],
+    }
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
+    if alat in tips:
+        st.markdown("Tips:")
+        for t in tips[alat]:
+            st.write(f"- {t}")
 
 if page == "Pengaturan":
-    st.title("Pengaturan Sistem")
-    cols = st.columns([2, 1])
-    with cols[0]:
-        st.subheader("Atur stok tiap alat")
-        for alat in INVENTORY:
-            val = st.number_input(f"Total {alat}", min_value=0, max_value=100, value=st.session_state.inventory[alat]["total"], key=f"set_{alat}")
-            if val != st.session_state.inventory[alat]["total"]:
-                diff = val - st.session_state.inventory[alat]["total"]
-                st.session_state.inventory[alat]["total"] = int(val)
-                st.session_state.inventory[alat]["available"] = max(0, min(st.session_state.inventory[alat]["available"] + diff, int(val)))
-    with cols[1]:
-        st.subheader("Reset data")
-        if st.button("Reset semua log"):
-            st.session_state.loans = []
-            st.session_state.returns = []
-            st.session_state.damages = []
-            st.session_state.next_loan_id = 1
-            st.session_state.next_damage_id = 1
-            for a in st.session_state.inventory:
-                st.session_state.inventory[a]["available"] = st.session_state.inventory[a]["total"]
-            st.success("Data di-reset.")
+    st.title("Pengaturan Sistem (Sederhana)")
+    st.markdown("Atur stok awal atau reset data. Bagian ini diproteksi password.")
 
+    def password_entered():
+        if st.session_state.get("admin_password_input") == ADMIN_PASSWORD:
+            st.session_state.settings_unlocked = True
+            del st.session_state["admin_password_input"]
+        else:
+            st.session_state.settings_unlocked = False
+
+    if not st.session_state.settings_unlocked:
+        st.text_input("Masukkan password admin", type="password", key="admin_password_input", on_change=password_entered)
+        st.warning("Masukkan password admin untuk membuka pengaturan.")
+    else:
+        st.success("Akses pengaturan berhasil dibuka.")
+
+        cols = st.columns([2, 1])
+        with cols[0]:
+            st.subheader("Atur stok tiap alat")
+            for alat in INVENTORY:
+                val = st.number_input(
+                    f"Total {alat}",
+                    min_value=0,
+                    max_value=100,
+                    value=st.session_state.inventory[alat]["total"],
+                    key=f"set_{alat}"
+                )
+                if val != st.session_state.inventory[alat]["total"]:
+                    diff = val - st.session_state.inventory[alat]["total"]
+                    st.session_state.inventory[alat]["total"] = int(val)
+                    st.session_state.inventory[alat]["available"] = max(
+                        0, min(st.session_state.inventory[alat]["available"] + diff, int(val))
+                    )
+
+        with cols[1]:
+            st.subheader("Reset data")
+            if st.button("Reset semua log (jangan asal klik)"):
+                st.session_state.loans = []
+                st.session_state.returns = []
+                st.session_state.damages = []
+                st.session_state.next_loan_id = 1
+                st.session_state.next_damage_id = 1
+                for a in st.session_state.inventory:
+                    st.session_state.inventory[a]["available"] = st.session_state.inventory[a]["total"]
+                st.success("Data di-reset.")
