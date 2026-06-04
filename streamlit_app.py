@@ -235,8 +235,9 @@ if page == "Log":
         st.subheader("Peminjaman")
         df_loans = loans_df()
         st.dataframe(df_loans.sort_values("waktu_pinjam", ascending=False), use_container_width=True)
-        with tab2:
-            st.subheader("Pengembalian")
+
+    with tab2:
+        st.subheader("Pengembalian")
         df_returns = returns_df()
         st.dataframe(df_returns.sort_values("waktu_kembali", ascending=False), use_container_width=True)
 
