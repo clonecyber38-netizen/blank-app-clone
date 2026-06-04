@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import io
 
-st.set_page_config(page_title="Logbook Digital Praktikum Titrimetri", layout="wide")
+st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
 
 INVENTORY = [
     "labu takar 100 mL",
@@ -15,7 +15,23 @@ INVENTORY = [
     "pipet tetes",
     "kaca arloji",
     "tutup kaca",
+    "gelas piala 500 mL",
+    "gelas piala 100 mL",
+    "pipet volumetrik 25 mL",
+    "pipet volumetrik 50 mL",
+    "bulb",
+    "kaki 3",
+    "kasa asbes",
+    "bunsen",
+    "pipet mohr 10 mL",
+    "statif",
+    "gelas ukur 10 mL",
+    "gelas ukur 50 mL",
+    "tabung reaksi",
+    "rak tabung reaksi",
 ]
+
+ADMIN_PASSWORD = "kelompok 2"
 
 if "inventory" not in st.session_state:
     st.session_state.inventory = {a: {"total": 5, "available": 5} for a in INVENTORY}
@@ -31,8 +47,6 @@ if "next_damage_id" not in st.session_state:
     st.session_state.next_damage_id = 1
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
-
-ADMIN_PASSWORD = "poltekaka2026"
 
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -99,7 +113,7 @@ st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.title("Logbook Digital Praktikum Titrimetri")
+    st.title("Logbook Digital Praktikum Laboratorium")
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
     col1, col2 = st.columns(2)
     with col1:
@@ -108,7 +122,7 @@ if page == "Dashboard":
             {"alat": k, "available": v["available"], "total": v["total"]}
             for k, v in st.session_state.inventory.items()
         ])
-        st.table(inv_table.set_index("alat"))
+        st.dataframe(inv_table, use_container_width=True)
     with col2:
         st.subheader("Aktivitas Terakhir")
         recent_loans = loans_df().sort_values("waktu_pinjam", ascending=False).head(5)
@@ -216,7 +230,6 @@ if page == "Pengembalian":
 
 if page == "Log":
     st.title("Catatan Peminjaman, Pengembalian, dan Kerusakan")
-
     tab1, tab2, tab3 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan"])
 
     with tab1:
@@ -238,7 +251,6 @@ if page == "Log":
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
             keterangan = st.text_area("Keterangan kerusakan")
             submit_rusak = st.form_submit_button("Simpan Kerusakan")
-
             if submit_rusak:
                 damage_id = st.session_state.next_damage_id
                 st.session_state.next_damage_id += 1
@@ -264,56 +276,50 @@ if page == "Log":
     df_damages = damages_df()
 
     if not df_loans.empty:
-        st.download_button(
-            "Unduh CSV Peminjaman",
-            df_loans.to_csv(index=False),
-            file_name="log_peminjaman.csv",
-            mime="text/csv"
-        )
-
+        st.download_button("Unduh CSV Peminjaman", df_loans.to_csv(index=False), file_name="log_peminjaman.csv", mime="text/csv")
     if not df_returns.empty:
-        st.download_button(
-            "Unduh CSV Pengembalian",
-            df_returns.to_csv(index=False),
-            file_name="log_pengembalian.csv",
-            mime="text/csv"
-        )
-
+        st.download_button("Unduh CSV Pengembalian", df_returns.to_csv(index=False), file_name="log_pengembalian.csv", mime="text/csv")
     if not df_damages.empty:
-        st.download_button(
-            "Unduh CSV Kerusakan",
-            df_damages.to_csv(index=False),
-            file_name="log_kerusakan.csv",
-            mime="text/csv"
-        )
+        st.download_button("Unduh CSV Kerusakan", df_damages.to_csv(index=False), file_name="log_kerusakan.csv", mime="text/csv")
 
 if page == "Edukasi":
-    st.title("Edukasi Alat Praktikum Titrimetri")
+    st.title("Edukasi Alat Praktikum Laboratorium")
     st.markdown("Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.")
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
+
     descriptions = {
-        "labu takar 100 mL": (
-            "Botol atau labu ukur untuk menakar volume cairan secara presisi. "
-            "Gunakan pada permukaan datar, baca meniskus pada garis mata. "
-            "Cuci bersih setelah digunakan."
-        ),
-        "buret": (
-            "Alat untuk titrasi dengan skala graduasi dan kran di bawah. "
-            "Pasang dengan klamp, kosongkan udara dari kran sebelum titrasi, dan baca volume di bawah meniskus."
-        ),
-        "klamp": "Digunakan untuk menjepit buret atau alat pada statif; pastikan terpasang kuat.",
-        "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi; bentuk kerucut memudahkan pengadukan tanpa tumpah.",
-        "corong kaca": "Untuk pemindahan cairan atau filtrasi; gunakan kertas saring bila diperlukan.",
-        "batang pengaduk": "Untuk mengaduk larutan selama titrasi agar reaksi berjalan homogen.",
-        "pipet tetes": "Untuk meneteskan indikator atau reagen sedikit demi sedikit; gunakan dengan hati-hati.",
-        "kaca arloji": "Untuk menimbang atau menutup bejana kecil; bersihkan setelah penggunaan.",
-        "tutup kaca": "Menutup bejana untuk mencegah kontaminasi atau penguapan.",
+        "labu takar 100 mL": "Alat untuk menakar volume cairan secara presisi. Gunakan pada permukaan datar dan baca meniskus pada garis mata.",
+        "buret": "Alat untuk titrasi dengan skala graduasi dan kran di bawah. Pastikan bebas gelembung udara sebelum dipakai.",
+        "klamp": "Digunakan untuk menjepit buret atau alat lain pada statif agar stabil.",
+        "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi. Bentuknya memudahkan pengadukan tanpa mudah tumpah.",
+        "corong kaca": "Untuk memindahkan cairan atau filtrasi.",
+        "batang pengaduk": "Untuk mengaduk larutan agar homogen.",
+        "pipet tetes": "Untuk meneteskan larutan dalam jumlah kecil.",
+        "kaca arloji": "Untuk menimbang sampel kecil atau menutup bejana.",
+        "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi.",
+        "gelas piala 500 mL": "Gelas piala berukuran 500 mL untuk menampung, mencampur, atau memanaskan larutan.",
+        "gelas piala 100 mL": "Gelas piala kecil untuk volume larutan yang lebih sedikit.",
+        "pipet volumetrik 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
+        "pipet volumetrik 50 mL": "Pipet untuk mengambil volume tetap 50 mL secara sangat presisi.",
+        "bulb": "Karet pengisap untuk membantu mengisi pipet tanpa mulut.",
+        "kaki 3": "Penyangga logam untuk pemanasan dengan bunsen.",
+        "kasa asbes": "Kasa untuk meratakan panas saat pemanasan.",
+        "bunsen": "Pembakar gas untuk pemanasan laboratorium.",
+        "pipet mohr 10 mL": "Pipet ukur untuk mengambil volume hingga 10 mL secara bertahap.",
+        "statif": "Stand untuk menjepit buret, corong, atau alat lain.",
+        "gelas ukur 10 mL": "Gelas ukur kecil untuk mengukur volume sampai 10 mL.",
+        "gelas ukur 50 mL": "Gelas ukur untuk volume sampai 50 mL.",
+        "tabung reaksi": "Wadah reaksi skala kecil.",
+        "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
     tips = {
-        "labu takar 100 mL": ["Jangan gunakan untuk pemindahan kasar; gunakan pipet atau corong bila perlu.", "Jaga garis ukur tetap bersih."],
-        "buret": ["Bilas buret dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran sebelum mulai."],
-        "erlenmeyer 250 mL": ["Pegang di bagian bawah saat menuang untuk stabilitas."],
+        "labu takar 100 mL": ["Jangan digunakan untuk pemanasan.", "Bersihkan setelah dipakai."],
+        "buret": ["Bilas dengan larutan yang akan digunakan sebelum titrasi.", "Periksa kebocoran kran."],
+        "pipet volumetrik 25 mL": ["Gunakan bulb, jangan hisap dengan mulut.", "Baca meniskus sejajar mata."],
+        "pipet volumetrik 50 mL": ["Gunakan bulb, jangan hisap dengan mulut.", "Baca meniskus sejajar mata."],
+        "bunsen": ["Jauhkan dari bahan mudah terbakar.", "Matikan setelah selesai."],
+        "tabung reaksi": ["Gunakan penjepit bila dipanaskan.", "Arahkan mulut tabung menjauh dari wajah."],
     }
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
     if alat in tips:
@@ -322,8 +328,8 @@ if page == "Edukasi":
             st.write(f"- {t}")
 
 if page == "Pengaturan":
-    st.title("Pengaturan Sistem (Sederhana)")
-    st.markdown("Atur stok awal atau reset data. Bagian ini diproteksi password.")
+    st.title("Pengaturan Sistem")
+    st.markdown("Hanya pihak lab yang boleh mengubah jumlah alat. Masukkan password untuk membuka akses.")
 
     def password_entered():
         if st.session_state.get("admin_password_input") == ADMIN_PASSWORD:
@@ -334,7 +340,7 @@ if page == "Pengaturan":
 
     if not st.session_state.settings_unlocked:
         st.text_input("Masukkan password admin", type="password", key="admin_password_input", on_change=password_entered)
-        st.warning("Masukkan password admin untuk membuka pengaturan.")
+        st.warning("Akses pengaturan terkunci.")
     else:
         st.success("Akses pengaturan berhasil dibuka.")
 
@@ -358,7 +364,7 @@ if page == "Pengaturan":
 
         with cols[1]:
             st.subheader("Reset data")
-            if st.button("Reset semua log (jangan asal klik)"):
+            if st.button("Reset semua log"):
                 st.session_state.loans = []
                 st.session_state.returns = []
                 st.session_state.damages = []
