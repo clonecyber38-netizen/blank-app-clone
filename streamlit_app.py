@@ -4,48 +4,6 @@ import sqlite3
 from datetime import datetime
 
 st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
-st.markdown(
-    """
-    <style>
-    .dashboard-box {
-        background-color: #E6E6FA;
-        padding: 18px;
-        border-radius: 16px;
-        border: 1px solid #d8c9f0;
-        margin-bottom: 15px;
-    }
-
-    .dashboard-title {
-        color: purple;
-        font-weight: 700;
-        font-size: 28px;
-        margin-bottom: 10px;
-    }
-
-    .dashboard-subtitle {
-        color: purple;
-        font-weight: 600;
-        font-size: 20px;
-        margin-bottom: 8px;
-    }
-
-    .stock-green {
-        color: green;
-        font-size: 16px;
-        margin-top: 0px;
-        margin-bottom: 8px;
-    }
-
-    .stock-red {
-        color: red;
-        font-size: 16px;
-        margin-top: 0px;
-        margin-bottom: 8px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 DB_FILE = "lab_logbook.db"
 ADMIN_PASSWORD = "kelompok 2"
@@ -225,47 +183,111 @@ def check_availability(requested):
     conn.close()
     return True, "Ok"
 
-def total_stock_status_color(av):
-    return "green" if av > 0 else "red"
+def apply_global_style():
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 35%, #d8b4fe 100%);
+        color: #2e1065;
+    }
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #5b21b6 0%, #7c3aed 100%);
+    }
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    div[data-baseweb="select"] > div {
+        background-color: #faf5ff !important;
+        border-radius: 12px !important;
+    }
+    div[data-baseweb="input"] > div {
+        background-color: #faf5ff !important;
+        border-radius: 12px !important;
+    }
+    .card-box {
+        background: rgba(255,255,255,0.72);
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(124,58,237,0.18);
+        box-shadow: 0 6px 18px rgba(91,33,182,0.12);
+        margin-bottom: 12px;
+    }
+    .card-title {
+        color: #6d28d9;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 4px;
+    }
+    .card-sub {
+        color: #1f2937;
+        font-size: 15px;
+        margin: 0;
+    }
+    .section-title {
+        color: #5b21b6;
+        font-weight: 800;
+    }
+    .stDataFrame {
+        background: rgba(255,255,255,0.85);
+        border-radius: 14px;
+        padding: 8px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+apply_global_style()
 
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.markdown('<div class="dashboard-box">', unsafe_allow_html=True)
-    st.markdown('<div class="dashboard-title">Logbook Digital Praktikum Laboratorium</div>', unsafe_allow_html=True)
+    st.markdown("<h1 class='section-title'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1.1, 1])
 
     with col1:
-        st.markdown('<div class="dashboard-subtitle">Stok Alat</div>', unsafe_allow_html=True)
+        st.markdown("<div class='card-box'><div class='card-title'>Stok Alat</div></div>", unsafe_allow_html=True)
         inv = get_inventory_df()
         for _, row in inv.iterrows():
             warna = "green" if int(row["available"]) > 0 else "red"
             st.markdown(
-                f"<p style='color:purple; font-size:18px; margin-bottom:4px;'>Total {row['alat']}</p>"
-                f"<p style='color:{warna}; font-size:16px; margin-top:0;'>Stok: {int(row['available'])} / {int(row['total'])}</p>",
+                f"""
+                <div class="card-box">
+                    <div class="card-title">{row['alat']}</div>
+                    <div class="card-sub" style="color:{warna}; font-weight:700;">
+                        Total: {int(row['available'])} / {int(row['total'])}
+                    </div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
 
     with col2:
-        st.markdown('<div class="dashboard-subtitle">Aktivitas Terakhir</div>', unsafe_allow_html=True)
-        st.markdown("<p style='color:purple;'><b>Peminjaman terbaru</b></p>", unsafe_allow_html=True)
-        st.dataframe(get_loans_df().head(5), use_container_width=True)
-        st.markdown("<p style='color:purple;'><b>Pengembalian terbaru</b></p>", unsafe_allow_html=True)
-        st.dataframe(get_returns_df().head(5), use_container_width=True)
+        st.markdown("<div class='card-box'><div class='card-title'>Aktivitas Terakhir</div></div>", unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div class='card-box'><div class='card-title'>Peminjaman terbaru</div></div>", unsafe_allow_html=True)
+        loans = get_loans_df().head(5)
+        if loans.empty:
+            st.info("Belum ada peminjaman.")
+        else:
+            st.dataframe(loans, use_container_width=True)
+
+        st.markdown("<div class='card-box'><div class='card-title'>Pengembalian terbaru</div></div>", unsafe_allow_html=True)
+        returns = get_returns_df().head(5)
+        if returns.empty:
+            st.info("Belum ada pengembalian.")
+        else:
+            st.dataframe(returns, use_container_width=True)
 
 if page == "Peminjaman":
-    st.title("Form Peminjaman Alat")
+    st.markdown("<h1 class='section-title'>Form Peminjaman Alat</h1>", unsafe_allow_html=True)
     with st.form("form_pinjam"):
         nama = st.text_input("Nama lengkap")
         nim = st.text_input("NIM / ID")
         tujuan = st.text_area("Tujuan / Praktikum (opsional)")
 
-        st.markdown("Pilih alat dan jumlah yang ingin dipinjam:")
+        st.markdown("### Pilih alat dan jumlah")
         inv = get_inventory_df()
         requested = {}
         cols = st.columns(3)
@@ -274,7 +296,26 @@ if page == "Peminjaman":
             c = cols[i % 3]
             row = inv[inv["alat"] == alat]
             max_av = int(row["available"].iloc[0]) if not row.empty else 0
-            qty = c.number_input(f"{alat} (tersedia {max_av})", min_value=0, max_value=max_av, value=0, step=1, key=f"pin_{alat}")
+
+            if max_av > 0:
+                c.markdown(
+                    f"<div style='background:#f3e8ff;padding:10px;border-radius:12px;border:1px solid #a855f7;color:#4c1d95;'><b>{alat}</b><br>Tersedia: {max_av}</div>",
+                    unsafe_allow_html=True
+                )
+            else:
+                c.markdown(
+                    f"<div style='background:#fee2e2;padding:10px;border-radius:12px;border:1px solid #ef4444;color:#991b1b;'><b>{alat}</b><br>Stok habis</div>",
+                    unsafe_allow_html=True
+                )
+
+            qty = c.number_input(
+                f"Jumlah {alat}",
+                min_value=0,
+                max_value=max_av,
+                value=0,
+                step=1,
+                key=f"pin_{alat}"
+            )
             if qty > 0:
                 requested[alat] = int(qty)
 
@@ -303,7 +344,7 @@ if page == "Peminjaman":
                     st.info("Data peminjaman ini akan terlihat oleh pengguna lain di halaman Log.")
 
 if page == "Pengembalian":
-    st.title("Form Pengembalian Alat")
+    st.markdown("<h1 class='section-title'>Form Pengembalian Alat</h1>", unsafe_allow_html=True)
     loans_df = get_loans_df()
     active_loans = loans_df[loans_df["status"] == "dipinjam"]
 
@@ -369,19 +410,19 @@ if page == "Pengembalian":
                     st.success("Pengembalian dicatat.")
 
 if page == "Log":
-    st.title("Catatan Peminjaman, Pengembalian, dan Kerusakan")
+    st.markdown("<h1 class='section-title'>Catatan Peminjaman, Pengembalian, dan Kerusakan</h1>", unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan"])
 
     with tab1:
-        st.subheader("Peminjaman")
+        st.markdown("<div class='card-box'><div class='card-title'>Data Peminjaman</div></div>", unsafe_allow_html=True)
         st.dataframe(get_loans_df(), use_container_width=True)
 
     with tab2:
-        st.subheader("Pengembalian")
+        st.markdown("<div class='card-box'><div class='card-title'>Data Pengembalian</div></div>", unsafe_allow_html=True)
         st.dataframe(get_returns_df(), use_container_width=True)
 
     with tab3:
-        st.subheader("Catat Alat Rusak")
+        st.markdown("<div class='card-box'><div class='card-title'>Catat Alat Rusak</div></div>", unsafe_allow_html=True)
         with st.form("form_rusak"):
             nama = st.text_input("Nama pelapor")
             alat_rusak = st.selectbox("Pilih alat yang rusak", INVENTORY)
@@ -414,7 +455,7 @@ if page == "Log":
                 st.success("Kerusakan alat berhasil dicatat, stok di Dashboard sudah berkurang.")
                 st.rerun()
 
-        st.subheader("Daftar Alat Rusak")
+        st.markdown("<div class='card-box'><div class='card-title'>Daftar Alat Rusak</div></div>", unsafe_allow_html=True)
         st.dataframe(get_damages_df(), use_container_width=True)
 
     st.markdown("### Ekspor log")
@@ -430,8 +471,8 @@ if page == "Log":
         st.download_button("Unduh CSV Kerusakan", df_damages.to_csv(index=False), file_name="log_kerusakan.csv", mime="text/csv")
 
 if page == "Edukasi":
-    st.title("Edukasi Alat Praktikum Laboratorium")
-    st.markdown("Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.")
+    st.markdown("<h1 class='section-title'>Edukasi Alat Praktikum Laboratorium</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.</div>", unsafe_allow_html=True)
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
 
@@ -461,11 +502,13 @@ if page == "Edukasi":
         "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
 
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if page == "Pengaturan":
-    st.title("Pengaturan Sistem")
-    st.markdown("Hanya pihak lab yang boleh mengubah jumlah alat. Masukkan password untuk membuka akses.")
+    st.markdown("<h1 class='section-title'>Pengaturan Sistem</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Hanya pihak lab yang boleh mengubah jumlah alat. Masukkan password untuk membuka akses.</div>", unsafe_allow_html=True)
 
     def password_entered():
         if st.session_state.get("admin_password_input") == ADMIN_PASSWORD:
@@ -483,7 +526,7 @@ if page == "Pengaturan":
 
         cols = st.columns([2, 1])
         with cols[0]:
-            st.subheader("Atur stok tiap alat")
+            st.markdown("<div class='card-box'><div class='card-title'>Atur stok tiap alat</div></div>", unsafe_allow_html=True)
             for alat in INVENTORY:
                 row = inv[inv["alat"] == alat]
                 current_total = int(row["total"].iloc[0]) if not row.empty else 0
@@ -501,7 +544,7 @@ if page == "Pengaturan":
                     update_inventory_item(alat, int(val), new_available)
 
         with cols[1]:
-            st.subheader("Reset data")
+            st.markdown("<div class='card-box'><div class='card-title'>Reset data</div></div>", unsafe_allow_html=True)
             if st.button("Reset semua log"):
                 conn = get_conn()
                 cur = conn.cursor()
