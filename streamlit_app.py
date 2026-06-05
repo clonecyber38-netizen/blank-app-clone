@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="Logbook Digital Praktikum Laboratorium", layout="wide")
+st.set_page_config(page_title="Manajemen Logbook Digital", layout="wide")
 
 DB_FILE = "lab_logbook.db"
 ADMIN_PASSWORD = "kelompok 2"
@@ -33,6 +33,33 @@ INVENTORY = [
     "tabung reaksi",
     "rak tabung reaksi",
 ]
+
+# Mapping nama alat ke URL gambar (Wikipedia Commons / sumber terbuka)
+ALAT_IMAGES = {
+    "labu takar 100 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Volumetric_flask.jpg/440px-Volumetric_flask.jpg",
+    "buret": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Buret_2.jpg/440px-Buret_2.jpg",
+    "klamp": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Laboratory_clamp.jpg/440px-Laboratory_clamp.jpg",
+    "erlenmeyer 250 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Erlenmeyer_flask.jpg/440px-Erlenmeyer_flask.jpg",
+    "corong kaca": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Funnel.svg/440px-Funnel.svg.png",
+    "batang pengaduk": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Glass_rod.jpg/440px-Glass_rod.jpg",
+    "pipet tetes": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Dropper.jpg/440px-Dropper.jpg",
+    "kaca arloji": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Clock_glass.jpg/440px-Clock_glass.jpg",
+    "tutup kaca": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Glass_lid.jpg/440px-Glass_lid.jpg",
+    "gelas piala 500 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Beaker_%282183066336%29.jpg/440px-Beaker_%282183066336%29.jpg",
+    "gelas piala 100 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Beaker_%282183066336%29.jpg/440px-Beaker_%282183066336%29.jpg",
+    "pipet volumetrik 25 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pipette_vol.jpg/440px-Pipette_vol.jpg",
+    "pipet volumetrik 50 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pipette_vol.jpg/440px-Pipette_vol.jpg",
+    "bulb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Pipette_bulb.jpg/440px-Pipette_bulb.jpg",
+    "kaki 3": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Tripod_for_laboratory.jpg/440px-Tripod_for_laboratory.jpg",
+    "kasa asbes": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Wire_gauges.jpg/440px-Wire_gauges.jpg",
+    "bunsen": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Bunsen_burner_flame.jpg/440px-Bunsen_burner_flame.jpg",
+    "pipet mohr 10 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Graduated_pipette.jpg/440px-Graduated_pipette.jpg",
+    "statif": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Retort_stand.jpg/440px-Retort_stand.jpg",
+    "gelas ukur 10 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Graduated_cylinder.jpg/440px-Graduated_cylinder.jpg",
+    "gelas ukur 50 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Graduated_cylinder.jpg/440px-Graduated_cylinder.jpg",
+    "tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Test_tubes.jpg/440px-Test_tubes.jpg",
+    "rak tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Test_tube_rack.jpg/440px-Test_tube_rack.jpg",
+}
 
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
@@ -267,16 +294,31 @@ def apply_bluetheme_style():
         color: white !important;
         border-radius: 12px !important;
     }
+    .image-card {
+        text-align: center;
+    }
+    .image-card img {
+        max-width: 300px;
+        border-radius: 14px;
+        border: 2px solid #bae6fd;
+        box-shadow: 0 4px 14px rgba(14,165,233,0.25);
+    }
+    .image-caption {
+        color: #0369a1;
+        font-size: 14px;
+        margin-top: 8px;
+        font-weight: 600;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 apply_bluetheme_style()
 
-st.sidebar.title("Menu")
+st.sidebar.title("Menu Logbook Digital")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.markdown("<h1 class='header-title'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='header-title'>Manajemen Logbook Digital</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
 
     col1, col2 = st.columns([1.1, 1])
@@ -514,7 +556,7 @@ if page == "Log":
 
 if page == "Edukasi":
     st.markdown("<h1 class='section-title'>Edukasi Alat Praktikum Laboratorium</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi, gambar, dan informasi penggunaan.</div>", unsafe_allow_html=True)
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
 
@@ -543,6 +585,15 @@ if page == "Edukasi":
         "tabung reaksi": "Wadah reaksi skala kecil.",
         "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
+
+    image_url = ALAT_IMAGES.get(alat, "https://via.placeholder.com/300x200?text=No+Image")
+
+    st.markdown(f"""
+    <div class="image-card">
+        <img src="{image_url}" alt="{alat}">
+        <div class="image-caption">{alat}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
@@ -588,13 +639,4 @@ if page == "Pengaturan":
         with cols[1]:
             st.markdown("<div class='card-box'><div class='card-title'>Reset data</div></div>", unsafe_allow_html=True)
             if st.button("Reset semua log"):
-                conn = get_conn()
-                cur = conn.cursor()
-                cur.execute("DELETE FROM loans")
-                cur.execute("DELETE FROM returns")
-                cur.execute("DELETE FROM damages")
-                for item in INVENTORY:
-                    cur.execute("UPDATE inventory SET total = 5, available = 5 WHERE item_name = ?", (item,))
-                conn.commit()
-                conn.close()
-                st.success("Data di-reset.")
+                
