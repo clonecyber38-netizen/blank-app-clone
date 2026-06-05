@@ -639,4 +639,13 @@ if page == "Pengaturan":
         with cols[1]:
             st.markdown("<div class='card-box'><div class='card-title'>Reset data</div></div>", unsafe_allow_html=True)
             if st.button("Reset semua log"):
-                
+                conn = get_conn()
+                cur = conn.cursor()
+                cur.execute("DELETE FROM loans")
+                cur.execute("DELETE FROM returns")
+                cur.execute("DELETE FROM damages")
+                for item in INVENTORY:
+                    cur.execute("UPDATE inventory SET total = 5, available = 5 WHERE item_name = ?", (item,))
+                conn.commit()
+                conn.close()
+                st.success("Data di-reset.")
