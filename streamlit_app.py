@@ -34,33 +34,6 @@ INVENTORY = [
     "rak tabung reaksi",
 ]
 
-# MAPPING NAMA ALAT KE URL GAMBAR WIKIPEDIA COMMONS (versi responsif)
-ALAT_IMAGES = {
-    "labu takar 100 mL": "https://upload.wikimedia.org/wikipedia/commons/3/30/Volumetric_flask.jpg",
-    "buret": "https://upload.wikimedia.org/wikipedia/commons/6/66/Buret_2.jpg",
-    "klamp": "https://upload.wikimedia.org/wikipedia/commons/8/87/Laboratory_clamp.jpg",
-    "erlenmeyer 250 mL": "https://upload.wikimedia.org/wikipedia/commons/5/51/Erlenmeyer_flask.jpg",
-    "corong kaca": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Funnel.svg",
-    "batang pengaduk": "https://upload.wikimedia.org/wikipedia/commons/3/36/Glass_rod.jpg",
-    "pipet tetes": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Dropper.jpg",
-    "kaca arloji": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Clock_glass.jpg",
-    "tutup kaca": "https://upload.wikimedia.org/wikipedia/commons/9/98/Glass_lid.jpg",
-    "gelas piala 500 mL": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Beaker_%282183066336%29.jpg",
-    "gelas piala 100 mL": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Beaker_%282183066336%29.jpg",
-    "pipet volumetrik 25 mL": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pipette_vol.jpg",
-    "pipet volumetrik 50 mL": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pipette_vol.jpg",
-    "bulb": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Pipette_bulb.jpg",
-    "kaki 3": "https://upload.wikimedia.org/wikipedia/commons/5/51/Tripod_for_laboratory.jpg",
-    "kasa asbes": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Wire_gauges.jpg",
-    "bunsen": "https://upload.wikimedia.org/wikipedia/commons/3/35/Bunsen_burner_flame.jpg",
-    "pipet mohr 10 mL": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Graduated_pipette.jpg",
-    "statif": "https://upload.wikimedia.org/wikipedia/commons/7/72/Retort_stand.jpg",
-    "gelas ukur 10 mL": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Graduated_cylinder.jpg",
-    "gelas ukur 50 mL": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Graduated_cylinder.jpg",
-    "tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/2/22/Test_tubes.jpg",
-    "rak tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Test_tube_rack.jpg",
-}
-
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
 
@@ -541,7 +514,7 @@ if page == "Log":
 
 if page == "Edukasi":
     st.markdown("<h1 class='section-title'>Edukasi Alat Praktikum Laboratorium</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi dan gambar alat.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.</div>", unsafe_allow_html=True)
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
 
@@ -557,7 +530,7 @@ if page == "Edukasi":
         "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi.",
         "gelas piala 500 mL": "Gelas piala berukuran 500 mL untuk menampung, mencampur, atau memanaskan larutan.",
         "gelas piala 100 mL": "Gelas piala kecil untuk volume larutan yang lebih sedikit.",
-        "pipet volumetric 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
+        "pipet volumetrik 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
         "pipet volumetrik 50 mL": "Pipet untuk mengambil volume tetap 50 mL secara sangat presisi.",
         "bulb": "Karet pengisap untuk membantu mengisi pipet tanpa mulut.",
         "kaki 3": "Penyangga logam untuk pemanasan dengan bunsen.",
@@ -570,12 +543,6 @@ if page == "Edukasi":
         "tabung reaksi": "Wadah reaksi skala kecil.",
         "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
-
-    image_url = ALAT_IMAGES.get(alat)
-    if image_url:
-        st.image(image_url, caption=alat, use_container_width=True)
-    else:
-        st.info("Gambar untuk alat ini belum tersedia.")
 
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
