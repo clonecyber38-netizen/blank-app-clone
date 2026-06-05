@@ -519,15 +519,15 @@ if page == "Edukasi":
     st.subheader(alat)
 
     descriptions = {
-        "labu takar 100 mL": "Alat untuk menakar volume cairan secara presisi. Gunakan pada permukaan datar dan baca meniskus pada garis mata.",
+        "labu takar 100 mL": "Alat untuk melarutkan bahan kimia. Gunakan pada permukaan datar dan baca meniskus atau tanda tera yang sejajar dengan mata.",
         "buret": "Alat untuk titrasi dengan skala graduasi dan kran di bawah. Pastikan bebas gelembung udara sebelum dipakai.",
         "klamp": "Digunakan untuk menjepit buret atau alat lain pada statif agar stabil.",
-        "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi. Bentuknya memudahkan pengadukan tanpa mudah tumpah.",
+        "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi. Bentuknya memudahkan pengadukan dan proses titrasi tanpa mudah tumpah.",
         "corong kaca": "Untuk memindahkan cairan atau filtrasi.",
-        "batang pengaduk": "Untuk mengaduk larutan agar homogen.",
+        "batang pengaduk": "Untuk mengaduk larutan agar homogen dan menyeka.",
         "pipet tetes": "Untuk meneteskan larutan dalam jumlah kecil.",
         "kaca arloji": "Untuk menimbang sampel kecil atau menutup bejana.",
-        "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi.",
+        "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi dan alas menimbang bahan kimia padatan.",
         "gelas piala 500 mL": "Gelas piala berukuran 500 mL untuk menampung, mencampur, atau memanaskan larutan.",
         "gelas piala 100 mL": "Gelas piala kecil untuk volume larutan yang lebih sedikit.",
         "pipet volumetrik 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
