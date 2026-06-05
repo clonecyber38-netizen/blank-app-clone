@@ -183,65 +183,100 @@ def check_availability(requested):
     conn.close()
     return True, "Ok"
 
-def apply_global_style():
+def apply_bluetheme_style():
     st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 35%, #d8b4fe 100%);
-        color: #2e1065;
+        background: linear-gradient(180deg, #e0f2ff 0%, #dbeafe 35%, #bfdbfe 100%);
+        color: #0f4d7f !important;
     }
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #5b21b6 0%, #7c3aed 100%);
+        background: linear-gradient(180deg, #0284c7 0%, #0ea5e9 100%) !important;
     }
     section[data-testid="stSidebar"] * {
         color: white !important;
     }
-    div[data-baseweb="select"] > div {
-        background-color: #faf5ff !important;
-        border-radius: 12px !important;
+    .header-title {
+        color: #0369a1;
+        font-weight: 800;
+        font-size: 32px;
+        margin-bottom: 6px;
+        text-shadow: 0 2px 6px rgba(165,211,239,0.4);
     }
-    div[data-baseweb="input"] > div {
-        background-color: #faf5ff !important;
-        border-radius: 12px !important;
+    .section-title {
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 22px;
+        margin-top: 16px;
     }
     .card-box {
-        background: rgba(255,255,255,0.72);
+        background: rgba(255,255,255,0.85);
         padding: 16px 18px;
         border-radius: 18px;
-        border: 1px solid rgba(124,58,237,0.18);
-        box-shadow: 0 6px 18px rgba(91,33,182,0.12);
+        border: 1px solid rgba(99,170,253,0.25);
+        box-shadow: 0 6px 18px rgba(14,165,233,0.12);
         margin-bottom: 12px;
     }
     .card-title {
-        color: #6d28d9;
+        color: #0369a1;
         font-weight: 700;
         font-size: 18px;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
     .card-sub {
         color: #1f2937;
         font-size: 15px;
         margin: 0;
     }
-    .section-title {
-        color: #5b21b6;
-        font-weight: 800;
+    .stock-ok {
+        color: #059669;
+        font-weight: 700;
+    }
+    .stock-empty {
+        color: #dc2632;
+        font-weight: 700;
+    }
+    .form-box {
+        background: rgba(255,255,255,0.92);
+        padding: 18px 20px;
+        border-radius: 20px;
+        border: 1px solid rgba(99,170,253,0.3);
+        box-shadow: 0 8px 24px rgba(14,165,233,0.14);
+    }
+    .select-box {
+        background: #f0f9ff;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid #bae6fd;
+        color: #0c4a6e;
+    }
+    .empty-box {
+        background: #fee2e2;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
     }
     .stDataFrame {
-        background: rgba(255,255,255,0.85);
+        background: rgba(255,255,255,0.92);
         border-radius: 14px;
         padding: 8px;
+    }
+    .btn-primary button {
+        background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%) !important;
+        color: white !important;
+        border-radius: 12px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-apply_global_style()
+apply_bluetheme_style()
 
 st.sidebar.title("Menu")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.markdown("<h1 class='section-title'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='header-title'>Logbook Digital Praktikum Laboratorium</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
 
     col1, col2 = st.columns([1.1, 1])
@@ -250,12 +285,12 @@ if page == "Dashboard":
         st.markdown("<div class='card-box'><div class='card-title'>Stok Alat</div></div>", unsafe_allow_html=True)
         inv = get_inventory_df()
         for _, row in inv.iterrows():
-            warna = "green" if int(row["available"]) > 0 else "red"
+            warna = "stock-ok" if int(row["available"]) > 0 else "stock-empty"
             st.markdown(
                 f"""
                 <div class="card-box">
                     <div class="card-title">{row['alat']}</div>
-                    <div class="card-sub" style="color:{warna}; font-weight:700;">
+                    <div class="card-sub" class="{warna}">
                         Total: {int(row['available'])} / {int(row['total'])}
                     </div>
                 </div>
@@ -266,14 +301,14 @@ if page == "Dashboard":
     with col2:
         st.markdown("<div class='card-box'><div class='card-title'>Aktivitas Terakhir</div></div>", unsafe_allow_html=True)
 
-        st.markdown("<div class='card-box'><div class='card-title'>Peminjaman terbaru</div></div>", unsafe_allow_html=True)
+        st.markdown("<div class='card-box'><div class='card-title'>📥 Peminjaman terbaru</div></div>", unsafe_allow_html=True)
         loans = get_loans_df().head(5)
         if loans.empty:
             st.info("Belum ada peminjaman.")
         else:
             st.dataframe(loans, use_container_width=True)
 
-        st.markdown("<div class='card-box'><div class='card-title'>Pengembalian terbaru</div></div>", unsafe_allow_html=True)
+        st.markdown("<div class='card-box'><div class='card-title'>📤 Pengembalian terbaru</div></div>", unsafe_allow_html=True)
         returns = get_returns_df().head(5)
         if returns.empty:
             st.info("Belum ada pengembalian.")
@@ -282,7 +317,8 @@ if page == "Dashboard":
 
 if page == "Peminjaman":
     st.markdown("<h1 class='section-title'>Form Peminjaman Alat</h1>", unsafe_allow_html=True)
-    with st.form("form_pinjam"):
+    with st.form("form_pinjam", clear_on_submit=False):
+        st.markdown("<div class='form-box'>", unsafe_allow_html=True)
         nama = st.text_input("Nama lengkap")
         nim = st.text_input("NIM / ID")
         tujuan = st.text_area("Tujuan / Praktikum (opsional)")
@@ -299,12 +335,12 @@ if page == "Peminjaman":
 
             if max_av > 0:
                 c.markdown(
-                    f"<div style='background:#f3e8ff;padding:10px;border-radius:12px;border:1px solid #a855f7;color:#4c1d95;'><b>{alat}</b><br>Tersedia: {max_av}</div>",
+                    f"<div class='select-box'><b>{alat}</b><br>Tersedia: {max_av}</div>",
                     unsafe_allow_html=True
                 )
             else:
                 c.markdown(
-                    f"<div style='background:#fee2e2;padding:10px;border-radius:12px;border:1px solid #ef4444;color:#991b1b;'><b>{alat}</b><br>Stok habis</div>",
+                    f"<div class='empty-box'><b>{alat}</b><br>Stok habis</div>",
                     unsafe_allow_html=True
                 )
 
@@ -319,6 +355,8 @@ if page == "Peminjaman":
             if qty > 0:
                 requested[alat] = int(qty)
 
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
         submit = st.form_submit_button("Pinjam")
         if submit:
             if not nama or not nim:
@@ -351,7 +389,8 @@ if page == "Pengembalian":
     if active_loans.empty:
         st.info("Tidak ada peminjaman aktif saat ini.")
     else:
-        with st.form("form_kembali"):
+        with st.form("form_kembali", clear_on_submit=False):
+            st.markdown("<div class='form-box'>", unsafe_allow_html=True)
             options = active_loans.apply(
                 lambda r: f'{r["loan_id"]} - {r["nama"]} ({r["nim"]}) - {r["alat"]}',
                 axis=1
@@ -383,6 +422,8 @@ if page == "Pengembalian":
                     returned[alat] = int(qty)
 
             kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"])
+            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
             submit_ret = st.form_submit_button("Kembalikan")
 
             if submit_ret:
@@ -423,12 +464,13 @@ if page == "Log":
 
     with tab3:
         st.markdown("<div class='card-box'><div class='card-title'>Catat Alat Rusak</div></div>", unsafe_allow_html=True)
-        with st.form("form_rusak"):
+        with st.form("form_rusak", clear_on_submit=False):
             nama = st.text_input("Nama pelapor")
             alat_rusak = st.selectbox("Pilih alat yang rusak", INVENTORY)
             jumlah_rusak = st.number_input("Jumlah rusak", min_value=1, max_value=100, value=1, step=1)
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
             keterangan = st.text_area("Keterangan kerusakan")
+            st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
             submit_rusak = st.form_submit_button("Simpan Kerusakan")
 
             if submit_rusak:
