@@ -34,31 +34,31 @@ INVENTORY = [
     "rak tabung reaksi",
 ]
 
-# Mapping nama alat ke URL gambar (Wikipedia Commons / sumber terbuka)
+# MAPPING NAMA ALAT KE URL GAMBAR WIKIPEDIA COMMONS (versi responsif)
 ALAT_IMAGES = {
-    "labu takar 100 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Volumetric_flask.jpg/440px-Volumetric_flask.jpg",
-    "buret": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Buret_2.jpg/440px-Buret_2.jpg",
-    "klamp": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Laboratory_clamp.jpg/440px-Laboratory_clamp.jpg",
-    "erlenmeyer 250 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Erlenmeyer_flask.jpg/440px-Erlenmeyer_flask.jpg",
-    "corong kaca": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Funnel.svg/440px-Funnel.svg.png",
-    "batang pengaduk": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Glass_rod.jpg/440px-Glass_rod.jpg",
-    "pipet tetes": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Dropper.jpg/440px-Dropper.jpg",
-    "kaca arloji": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Clock_glass.jpg/440px-Clock_glass.jpg",
-    "tutup kaca": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Glass_lid.jpg/440px-Glass_lid.jpg",
-    "gelas piala 500 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Beaker_%282183066336%29.jpg/440px-Beaker_%282183066336%29.jpg",
-    "gelas piala 100 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Beaker_%282183066336%29.jpg/440px-Beaker_%282183066336%29.jpg",
-    "pipet volumetrik 25 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pipette_vol.jpg/440px-Pipette_vol.jpg",
-    "pipet volumetrik 50 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Pipette_vol.jpg/440px-Pipette_vol.jpg",
-    "bulb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Pipette_bulb.jpg/440px-Pipette_bulb.jpg",
-    "kaki 3": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Tripod_for_laboratory.jpg/440px-Tripod_for_laboratory.jpg",
-    "kasa asbes": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Wire_gauges.jpg/440px-Wire_gauges.jpg",
-    "bunsen": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Bunsen_burner_flame.jpg/440px-Bunsen_burner_flame.jpg",
-    "pipet mohr 10 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Graduated_pipette.jpg/440px-Graduated_pipette.jpg",
-    "statif": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Retort_stand.jpg/440px-Retort_stand.jpg",
-    "gelas ukur 10 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Graduated_cylinder.jpg/440px-Graduated_cylinder.jpg",
-    "gelas ukur 50 mL": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Graduated_cylinder.jpg/440px-Graduated_cylinder.jpg",
-    "tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Test_tubes.jpg/440px-Test_tubes.jpg",
-    "rak tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Test_tube_rack.jpg/440px-Test_tube_rack.jpg",
+    "labu takar 100 mL": "https://upload.wikimedia.org/wikipedia/commons/3/30/Volumetric_flask.jpg",
+    "buret": "https://upload.wikimedia.org/wikipedia/commons/6/66/Buret_2.jpg",
+    "klamp": "https://upload.wikimedia.org/wikipedia/commons/8/87/Laboratory_clamp.jpg",
+    "erlenmeyer 250 mL": "https://upload.wikimedia.org/wikipedia/commons/5/51/Erlenmeyer_flask.jpg",
+    "corong kaca": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Funnel.svg",
+    "batang pengaduk": "https://upload.wikimedia.org/wikipedia/commons/3/36/Glass_rod.jpg",
+    "pipet tetes": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Dropper.jpg",
+    "kaca arloji": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Clock_glass.jpg",
+    "tutup kaca": "https://upload.wikimedia.org/wikipedia/commons/9/98/Glass_lid.jpg",
+    "gelas piala 500 mL": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Beaker_%282183066336%29.jpg",
+    "gelas piala 100 mL": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Beaker_%282183066336%29.jpg",
+    "pipet volumetrik 25 mL": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pipette_vol.jpg",
+    "pipet volumetrik 50 mL": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pipette_vol.jpg",
+    "bulb": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Pipette_bulb.jpg",
+    "kaki 3": "https://upload.wikimedia.org/wikipedia/commons/5/51/Tripod_for_laboratory.jpg",
+    "kasa asbes": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Wire_gauges.jpg",
+    "bunsen": "https://upload.wikimedia.org/wikipedia/commons/3/35/Bunsen_burner_flame.jpg",
+    "pipet mohr 10 mL": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Graduated_pipette.jpg",
+    "statif": "https://upload.wikimedia.org/wikipedia/commons/7/72/Retort_stand.jpg",
+    "gelas ukur 10 mL": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Graduated_cylinder.jpg",
+    "gelas ukur 50 mL": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Graduated_cylinder.jpg",
+    "tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/2/22/Test_tubes.jpg",
+    "rak tabung reaksi": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Test_tube_rack.jpg",
 }
 
 if "settings_unlocked" not in st.session_state:
@@ -293,21 +293,6 @@ def apply_bluetheme_style():
         background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%) !important;
         color: white !important;
         border-radius: 12px !important;
-    }
-    .image-card {
-        text-align: center;
-    }
-    .image-card img {
-        max-width: 300px;
-        border-radius: 14px;
-        border: 2px solid #bae6fd;
-        box-shadow: 0 4px 14px rgba(14,165,233,0.25);
-    }
-    .image-caption {
-        color: #0369a1;
-        font-size: 14px;
-        margin-top: 8px;
-        font-weight: 600;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -556,7 +541,7 @@ if page == "Log":
 
 if page == "Edukasi":
     st.markdown("<h1 class='section-title'>Edukasi Alat Praktikum Laboratorium</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi, gambar, dan informasi penggunaan.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi dan gambar alat.</div>", unsafe_allow_html=True)
     alat = st.selectbox("Pilih alat", INVENTORY)
     st.subheader(alat)
 
@@ -572,7 +557,7 @@ if page == "Edukasi":
         "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi.",
         "gelas piala 500 mL": "Gelas piala berukuran 500 mL untuk menampung, mencampur, atau memanaskan larutan.",
         "gelas piala 100 mL": "Gelas piala kecil untuk volume larutan yang lebih sedikit.",
-        "pipet volumetrik 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
+        "pipet volumetric 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
         "pipet volumetrik 50 mL": "Pipet untuk mengambil volume tetap 50 mL secara sangat presisi.",
         "bulb": "Karet pengisap untuk membantu mengisi pipet tanpa mulut.",
         "kaki 3": "Penyangga logam untuk pemanasan dengan bunsen.",
@@ -586,14 +571,11 @@ if page == "Edukasi":
         "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
     }
 
-    image_url = ALAT_IMAGES.get(alat, "https://via.placeholder.com/300x200?text=No+Image")
-
-    st.markdown(f"""
-    <div class="image-card">
-        <img src="{image_url}" alt="{alat}">
-        <div class="image-caption">{alat}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    image_url = ALAT_IMAGES.get(alat)
+    if image_url:
+        st.image(image_url, caption=alat, use_container_width=True)
+    else:
+        st.info("Gambar untuk alat ini belum tersedia.")
 
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.write(descriptions.get(alat, "Deskripsi tidak tersedia."))
