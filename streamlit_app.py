@@ -14,7 +14,6 @@ INVENTORY = [
     "labu takar 100 mL",
     "buret",
     "klamp",
-    "statif",
     "erlenmeyer 250 mL",
     "corong kaca",
     "batang pengaduk",
@@ -30,6 +29,7 @@ INVENTORY = [
     "kasa asbes",
     "bunsen",
     "pipet mohr 10 mL",
+    "statif",
     "gelas ukur 10 mL",
     "gelas ukur 50 mL",
     "tabung reaksi",
@@ -281,7 +281,7 @@ st.sidebar.title("Menu Logbook Digital")
 page = st.sidebar.radio("Pilih halaman", ["Dashboard", "Peminjaman", "Pengembalian", "Log", "Edukasi", "Pengaturan"])
 
 if page == "Dashboard":
-    st.markdown("<h1 class='header-title'>Manajemen Logbook Digital</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='header-title'>Manajemen Logbook Digital Praktikum Titrimetri</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
 
     col1, col2 = st.columns([1.1, 1])
@@ -515,7 +515,6 @@ if page == "Edukasi":
         "labu takar 100 mL": "Alat untuk melarutkan bahan kimia. Gunakan pada permukaan datar dan baca meniskus atau tanda tera yang sejajar dengan mata.",
         "buret": "Alat untuk titrasi dengan skala graduasi dan kran di bawah. Pastikan bebas gelembung udara sebelum dipakai.",
         "klamp": "Digunakan untuk menjepit buret atau alat lain pada statif agar stabil.",
-        "statif": "Stand untuk menjepit buret, corong, atau alat lain.",
         "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi. Bentuknya memudahkan pengadukan dan proses titrasi tanpa mudah tumpah.",
         "corong kaca": "Untuk memindahkan cairan atau filtrasi.",
         "batang pengaduk": "Untuk mengaduk larutan agar homogen dan menyeka.",
@@ -531,6 +530,7 @@ if page == "Edukasi":
         "kasa asbes": "Kasa untuk meratakan panas saat pemanasan.",
         "bunsen": "Pembakar gas untuk pemanasan laboratorium.",
         "pipet mohr 10 mL": "Pipet ukur untuk mengambil volume hingga 10 mL secara bertahap.",
+        "statif": "Stand untuk menjepit buret, corong, atau alat lain.",
         "gelas ukur 10 mL": "Gelas ukur kecil untuk mengukur volume sampai 10 mL.",
         "gelas ukur 50 mL": "Gelas ukur untuk volume sampai 50 mL.",
         "tabung reaksi": "Wadah reaksi skala kecil.",
