@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-st.set_page_config(page_title="Manajemen Logbook Digital", layout="wide")
+st.set_page_config(page_title="Manajemen Logbook Digital Praktikum Titrimetri", layout="wide")
 
 DB_FILE = "lab_logbook.db"
 ADMIN_PASSWORD = "kelompok 2"
