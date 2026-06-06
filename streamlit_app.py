@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 st.set_page_config(page_title="Manajemen Logbook Digital", layout="wide")
 
 DB_FILE = "lab_logbook.db"
 ADMIN_PASSWORD = "kelompok 2"
+WIB = ZoneInfo("Asia/Jakarta")
 
 INVENTORY = [
     "labu takar 100 mL",
@@ -37,8 +39,11 @@ INVENTORY = [
 if "settings_unlocked" not in st.session_state:
     st.session_state.settings_unlocked = False
 
+def now_wib():
+    return datetime.now(WIB)
+
 def now_str():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return now_wib().strftime("%Y-%m-%d %H:%M:%S WIB")
 
 def get_conn():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -317,6 +322,7 @@ if page == "Dashboard":
 
 if page == "Peminjaman":
     st.markdown("<h1 class='section-title'>Form Peminjaman Alat</h1>", unsafe_allow_html=True)
+    st.caption(f"Waktu sekarang: {now_str()}")
     with st.form("form_pinjam", clear_on_submit=False):
         st.markdown("<div class='form-box'>", unsafe_allow_html=True)
         nama = st.text_input("Nama lengkap")
@@ -334,15 +340,9 @@ if page == "Peminjaman":
             max_av = int(row["available"].iloc[0]) if not row.empty else 0
 
             if max_av > 0:
-                c.markdown(
-                    f"<div class='select-box'><b>{alat}</b><br>Tersedia: {max_av}</div>",
-                    unsafe_allow_html=True
-                )
+                c.markdown(f"<div class='select-box'><b>{alat}</b><br>Tersedia: {max_av}</div>", unsafe_allow_html=True)
             else:
-                c.markdown(
-                    f"<div class='empty-box'><b>{alat}</b><br>Stok habis</div>",
-                    unsafe_allow_html=True
-                )
+                c.markdown(f"<div class='empty-box'><b>{alat}</b><br>Stok habis</div>", unsafe_allow_html=True)
 
             qty = c.number_input(
                 f"Jumlah {alat}",
@@ -356,7 +356,6 @@ if page == "Peminjaman":
                 requested[alat] = int(qty)
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
         submit = st.form_submit_button("Pinjam")
         if submit:
             if not nama or not nim:
@@ -383,6 +382,7 @@ if page == "Peminjaman":
 
 if page == "Pengembalian":
     st.markdown("<h1 class='section-title'>Form Pengembalian Alat</h1>", unsafe_allow_html=True)
+    st.caption(f"Waktu sekarang: {now_str()}")
     loans_df = get_loans_df()
     active_loans = loans_df[loans_df["status"] == "dipinjam"]
 
@@ -423,7 +423,6 @@ if page == "Pengembalian":
 
             kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"])
             st.markdown("</div>", unsafe_allow_html=True)
-            st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
             submit_ret = st.form_submit_button("Kembalikan")
 
             if submit_ret:
@@ -445,7 +444,6 @@ if page == "Pengembalian":
                         "INSERT INTO returns (loan_id, nama, items, waktu_kembali, kondisi) VALUES (?, ?, ?, ?, ?)",
                         (selected_id, loan_row["nama"], str(returned), now_str(), kondisi)
                     )
-
                     conn.commit()
                     conn.close()
                     st.success("Pengembalian dicatat.")
@@ -455,22 +453,18 @@ if page == "Log":
     tab1, tab2, tab3 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan"])
 
     with tab1:
-        st.markdown("<div class='card-box'><div class='card-title'>Data Peminjaman</div></div>", unsafe_allow_html=True)
         st.dataframe(get_loans_df(), use_container_width=True)
 
     with tab2:
-        st.markdown("<div class='card-box'><div class='card-title'>Data Pengembalian</div></div>", unsafe_allow_html=True)
         st.dataframe(get_returns_df(), use_container_width=True)
 
     with tab3:
-        st.markdown("<div class='card-box'><div class='card-title'>Catat Alat Rusak</div></div>", unsafe_allow_html=True)
         with st.form("form_rusak", clear_on_submit=False):
             nama = st.text_input("Nama pelapor")
             alat_rusak = st.selectbox("Pilih alat yang rusak", INVENTORY)
             jumlah_rusak = st.number_input("Jumlah rusak", min_value=1, max_value=100, value=1, step=1)
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
             keterangan = st.text_area("Keterangan kerusakan")
-            st.markdown('<div class="btn-primary"></div>', unsafe_allow_html=True)
             submit_rusak = st.form_submit_button("Simpan Kerusakan")
 
             if submit_rusak:
@@ -497,7 +491,6 @@ if page == "Log":
                 st.success("Kerusakan alat berhasil dicatat, stok di Dashboard sudah berkurang.")
                 st.rerun()
 
-        st.markdown("<div class='card-box'><div class='card-title'>Daftar Alat Rusak</div></div>", unsafe_allow_html=True)
         st.dataframe(get_damages_df(), use_container_width=True)
 
     st.markdown("### Ekspor log")
