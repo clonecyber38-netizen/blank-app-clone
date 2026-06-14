@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -134,7 +135,13 @@ def get_loans_df():
         return pd.DataFrame(columns=["loan_id", "nama", "nim", "alat", "jumlah", "tujuan", "waktu_pinjam", "status"])
     rows = []
     for _, r in df.iterrows():
-        items = eval(r["items"])
+        try:
+            items = json.loads(r["items"])
+        except:
+            try:
+                items = eval(r["items"])
+            except:
+                items = {}
         rows.append({
             "loan_id": r["loan_id"],
             "nama": r["nama"],
@@ -155,7 +162,13 @@ def get_returns_df():
         return pd.DataFrame(columns=["return_id", "loan_id", "nama", "alat", "jumlah", "waktu_kembali", "kondisi"])
     rows = []
     for _, r in df.iterrows():
-        items = eval(r["items"])
+        try:
+            items = json.loads(r["items"])
+        except:
+            try:
+                items = eval(r["items"])
+            except:
+                items = {}
         rows.append({
             "return_id": r["return_id"],
             "loan_id": r["loan_id"],
@@ -234,11 +247,11 @@ def apply_bluetheme_style():
         margin: 0;
     }
     .stock-ok {
-        color: #059669;
+        color: #059669 !important;
         font-weight: 700;
     }
     .stock-empty {
-        color: #dc2632;
+        color: #dc2626 !important;
         font-weight: 700;
     }
     .form-box {
@@ -267,10 +280,23 @@ def apply_bluetheme_style():
         border-radius: 14px;
         padding: 8px;
     }
-    .btn-primary button {
-        background: linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%) !important;
+    .team-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .team-table th {
+        background-color: #0284c7;
         color: white !important;
-        border-radius: 12px !important;
+        text-align: left;
+        padding: 10px;
+    }
+    .team-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e0f2ff;
+        color: #0f4d7f;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -284,10 +310,28 @@ if page == "Dashboard":
     st.markdown("<h1 class='header-title'>Manajemen Logbook Digital Praktikum Titrimetri</h1>", unsafe_allow_html=True)
     st.markdown("Ringkasan stok alat dan aktivitas terkini.")
 
+    # MENAMPILKAN NAMA PENYUSUN KELOMPOK DI SINI
+    st.markdown("""
+    <div class="card-box" style="background: rgba(255, 255, 255, 0.95); border-left: 5px solid #0284c7;">
+        <div class="card-title" style="font-size: 16px; margin-bottom: 10px;">📋 Tim Penyusun Sistem Logbook:</div>
+        <table class="team-table">
+            <tr>
+                <th>Nama Lengkap</th>
+                <th>NIM / ID Anggota</th>
+            </tr>
+            <tr><td>Anindhya Halwa Ariani</td><td><strong>2560575</strong></td></tr>
+            <tr><td>Fikri Fadhilah</td><td><strong>2560633</strong></td></tr>
+            <tr><td>Kevin Kalyana Dharma</td><td><strong>2560658</strong></td></tr>
+            <tr><td>Nasywaa Rihhadatul Aisya</td><td><strong>2560713</strong></td></tr>
+            <tr><td>Siti Azra Alfashahah</td><td><strong>2560783</strong></td></tr>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2 = st.columns([1.1, 1])
 
     with col1:
-        st.markdown("<div class='card-box'><div class='card-title'>Stok Alat</div></div>", unsafe_allow_html=True)
+        st.markdown("<h3 class='section-title'>Stok Alat Saat Ini</h3>", unsafe_allow_html=True)
         inv = get_inventory_df()
         for _, row in inv.iterrows():
             warna = "stock-ok" if int(row["available"]) > 0 else "stock-empty"
@@ -295,8 +339,8 @@ if page == "Dashboard":
                 f"""
                 <div class="card-box">
                     <div class="card-title">{row['alat']}</div>
-                    <div class="card-sub" class="{warna}">
-                        Total: {int(row['available'])} / {int(row['total'])}
+                    <div class="card-sub {warna}">
+                        Tersedia untuk Dipinjam: {int(row['available'])} / {int(row['total'])} unit
                     </div>
                 </div>
                 """,
@@ -304,7 +348,7 @@ if page == "Dashboard":
             )
 
     with col2:
-        st.markdown("<div class='card-box'><div class='card-title'>Aktivitas Terakhir</div></div>", unsafe_allow_html=True)
+        st.markdown("<h3 class='section-title'>Aktivitas Terakhir</h3>", unsafe_allow_html=True)
 
         st.markdown("<div class='card-box'><div class='card-title'>📥 Peminjaman terbaru</div></div>", unsafe_allow_html=True)
         loans = get_loans_df().head(5)
@@ -323,8 +367,7 @@ if page == "Dashboard":
 if page == "Peminjaman":
     st.markdown("<h1 class='section-title'>Form Peminjaman Alat</h1>", unsafe_allow_html=True)
     st.caption(f"Waktu sekarang: {now_str()}")
-    with st.form("form_pinjam", clear_on_submit=False):
-        st.markdown("<div class='form-box'>", unsafe_allow_html=True)
+    with st.form("form_pinjam", clear_on_submit=True):
         nama = st.text_input("Nama lengkap")
         nim = st.text_input("NIM / ID")
         tujuan = st.text_area("Tujuan / Praktikum (opsional)")
@@ -355,8 +398,7 @@ if page == "Peminjaman":
             if qty > 0:
                 requested[alat] = int(qty)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-        submit = st.form_submit_button("Pinjam")
+        submit = st.form_submit_button("Konfirmasi Pinjam")
         if submit:
             if not nama or not nim:
                 st.error("Isi nama dan NIM terlebih dahulu.")
@@ -373,57 +415,73 @@ if page == "Peminjaman":
                         cur.execute("UPDATE inventory SET available = available - ? WHERE item_name = ?", (q, alat))
                     cur.execute(
                         "INSERT INTO loans (nama, nim, items, tujuan, waktu_pinjam, status) VALUES (?, ?, ?, ?, ?, ?)",
-                        (nama, nim, str(requested), tujuan, now_str(), "dipinjam")
+                        (nama, nim, json.dumps(requested), tujuan, now_str(), "dipinjam")
                     )
                     conn.commit()
                     conn.close()
-                    st.success("Peminjaman dicatat.")
-                    st.info("Data peminjaman ini akan terlihat oleh pengguna lain di halaman Log.")
+                    st.success("Peminjaman berhasil dicatat!")
+                    st.rerun()
 
 if page == "Pengembalian":
     st.markdown("<h1 class='section-title'>Form Pengembalian Alat</h1>", unsafe_allow_html=True)
     st.caption(f"Waktu sekarang: {now_str()}")
+    
     loans_df = get_loans_df()
     active_loans = loans_df[loans_df["status"] == "dipinjam"]
 
     if active_loans.empty:
         st.info("Tidak ada peminjaman aktif saat ini.")
     else:
-        with st.form("form_kembali", clear_on_submit=False):
+        options = active_loans.apply(
+            lambda r: f'{r["loan_id"]} - {r["nama"]} ({r["nim"]}) - {r["alat"]}',
+            axis=1
+        ).tolist()
+        
+        sel = st.selectbox("Pilih data peminjaman aktif:", options=options, key="select_pengembalian_aktif")
+        selected_id = int(sel.split(" - ")[0])
+
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM loans WHERE loan_id = ?", (selected_id,))
+        loan_row = cur.fetchone()
+        conn.close()
+
+        try:
+            items = json.loads(loan_row["items"])
+        except:
+            try:
+                items = eval(loan_row["items"])
+            except:
+                items = {}
+
+        items = {k: v for k, v in items.items() if v > 0}
+
+        with st.form(f"form_kembali_id_{selected_id}", clear_on_submit=True):
             st.markdown("<div class='form-box'>", unsafe_allow_html=True)
-            options = active_loans.apply(
-                lambda r: f'{r["loan_id"]} - {r["nama"]} ({r["nim"]}) - {r["alat"]}',
-                axis=1
-            ).tolist()
-            sel = st.selectbox("Pilih peminjaman", options=options)
-            selected_id = int(sel.split(" - ")[0])
-
-            conn = get_conn()
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM loans WHERE loan_id = ?", (selected_id,))
-            loan_row = cur.fetchone()
-            conn.close()
-
-            items = eval(loan_row["items"])
+            st.markdown(f"### Detail alat yang harus dikembalikan (ID Peminjaman: {selected_id}):")
+            
             returned = {}
             cols = st.columns(3)
+            
             for i, alat in enumerate(items.keys()):
                 c = cols[i % 3]
-                max_return = items[alat]
+                max_return = int(items[alat])
+                
                 qty = c.number_input(
                     f"{alat} (maks {max_return})",
                     min_value=0,
                     max_value=max_return,
                     value=max_return,
                     step=1,
-                    key=f"ret_{selected_id}_{alat}"
+                    key=f"input_numeric_{selected_id}_{alat}"
                 )
                 if qty > 0:
                     returned[alat] = int(qty)
 
-            kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"])
+            kondisi = st.selectbox("Kondisi alat setelah dikembalikan", ["baik", "rusak ringan", "rusak berat"], key=f"kondisi_{selected_id}")
             st.markdown("</div>", unsafe_allow_html=True)
-            submit_ret = st.form_submit_button("Kembalikan")
+            
+            submit_ret = st.form_submit_button("Konfirmasi Pengembalian")
 
             if submit_ret:
                 if not returned:
@@ -431,26 +489,32 @@ if page == "Pengembalian":
                 else:
                     conn = get_conn()
                     cur = conn.cursor()
+                    
                     for alat, q in returned.items():
                         cur.execute("UPDATE inventory SET available = available + ? WHERE item_name = ?", (q, alat))
-                        items[alat] -= q
+                        if alat in items:
+                            items[alat] -= q
 
-                    if all(v == 0 for v in items.values()):
+                    items = {k: v for k, v in items.items() if v > 0}
+
+                    if not items:
                         cur.execute("UPDATE loans SET status = ? WHERE loan_id = ?", ("dikembalikan", selected_id))
                     else:
-                        cur.execute("UPDATE loans SET items = ? WHERE loan_id = ?", (str(items), selected_id))
+                        cur.execute("UPDATE loans SET items = ? WHERE loan_id = ?", (json.dumps(items), selected_id))
 
                     cur.execute(
                         "INSERT INTO returns (loan_id, nama, items, waktu_kembali, kondisi) VALUES (?, ?, ?, ?, ?)",
-                        (selected_id, loan_row["nama"], str(returned), now_str(), kondisi)
+                        (selected_id, loan_row["nama"], json.dumps(returned), now_str(), kondisi)
                     )
                     conn.commit()
                     conn.close()
-                    st.success("Pengembalian dicatat.")
+                    
+                    st.success(f"Pengembalian untuk transaksi ID {selected_id} berhasil dicatat!")
+                    st.rerun()
 
 if page == "Log":
     st.markdown("<h1 class='section-title'>Catatan Peminjaman, Pengembalian, dan Kerusakan</h1>", unsafe_allow_html=True)
-    tab1, tab2, tab3 = st.tabs(["Peminjaman", "Pengembalian", "Kerusakan"])
+    tab1, tab2, tab3 = st.tabs(["📋 Peminjaman", "🔄 Pengembalian", "⚠️ Kerusakan Alat"])
 
     with tab1:
         st.dataframe(get_loans_df(), use_container_width=True)
@@ -459,13 +523,14 @@ if page == "Log":
         st.dataframe(get_returns_df(), use_container_width=True)
 
     with tab3:
-        with st.form("form_rusak", clear_on_submit=False):
+        with st.form("form_rusak", clear_on_submit=True):
+            st.write("### Laporkan Kerusakan Alat Baru")
             nama = st.text_input("Nama pelapor")
             alat_rusak = st.selectbox("Pilih alat yang rusak", INVENTORY)
             jumlah_rusak = st.number_input("Jumlah rusak", min_value=1, max_value=100, value=1, step=1)
             kondisi = st.selectbox("Tingkat kerusakan", ["rusak ringan", "rusak sedang", "rusak berat"])
-            keterangan = st.text_area("Keterangan kerusakan")
-            submit_rusak = st.form_submit_button("Simpan Kerusakan")
+            keterangan = st.text_area("Keterangan detail kerusakan")
+            submit_rusak = st.form_submit_button("Simpan Laporan")
 
             if submit_rusak:
                 conn = get_conn()
@@ -488,53 +553,55 @@ if page == "Log":
 
                 conn.commit()
                 conn.close()
-                st.success("Kerusakan alat berhasil dicatat, stok di Dashboard sudah berkurang.")
+                st.success("Kerusakan alat berhasil dicatat, stok otomatis disesuaikan.")
                 st.rerun()
 
+        st.write("### Riwayat Kerusakan")
         st.dataframe(get_damages_df(), use_container_width=True)
 
-    st.markdown("### Ekspor log")
+    st.markdown("### 📥 Ekspor Log Data (Format CSV)")
     df_loans = get_loans_df()
     df_returns = get_returns_df()
     df_damages = get_damages_df()
 
+    col_dl1, col_dl2, col_dl3 = st.columns(3)
     if not df_loans.empty:
-        st.download_button("Unduh CSV Peminjaman", df_loans.to_csv(index=False), file_name="log_peminjaman.csv", mime="text/csv")
+        col_dl1.download_button("Unduh CSV Peminjaman", df_loans.to_csv(index=False), file_name="log_peminjaman.csv", mime="text/csv", use_container_width=True)
     if not df_returns.empty:
-        st.download_button("Unduh CSV Pengembalian", df_returns.to_csv(index=False), file_name="log_pengembalian.csv", mime="text/csv")
+        col_dl2.download_button("Unduh CSV Pengembalian", df_returns.to_csv(index=False), file_name="log_pengembalian.csv", mime="text/csv", use_container_width=True)
     if not df_damages.empty:
-        st.download_button("Unduh CSV Kerusakan", df_damages.to_csv(index=False), file_name="log_kerusakan.csv", mime="text/csv")
+        col_dl3.download_button("Unduh CSV Kerusakan", df_damages.to_csv(index=False), file_name="log_kerusakan.csv", mime="text/csv", use_container_width=True)
 
 if page == "Edukasi":
     st.markdown("<h1 class='section-title'>Edukasi Alat Praktikum Laboratorium</h1>", unsafe_allow_html=True)
     st.markdown("<div class='card-box'>Pilih alat untuk melihat deskripsi singkat, penggunaan, dan tips keselamatan.</div>", unsafe_allow_html=True)
-    alat = st.selectbox("Pilih alat", INVENTORY)
-    st.subheader(alat)
+    alat = st.selectbox("Pilih jenis alat:", INVENTORY)
+    st.subheader(f"💡 Detail Alat: {alat.title()}")
 
     descriptions = {
-        "labu takar 100 mL": "Alat untuk melarutkan bahan kimia. Gunakan pada permukaan datar dan baca meniskus atau tanda tera yang sejajar dengan mata.",
-        "buret": "Alat untuk titrasi dengan skala graduasi dan kran di bawah. Pastikan bebas gelembung udara sebelum dipakai.",
-        "klamp": "Digunakan untuk menjepit buret atau alat lain pada statif agar stabil.",
-        "erlenmeyer 250 mL": "Wadah reaksi untuk titrasi. Bentuknya memudahkan pengadukan dan proses titrasi tanpa mudah tumpah.",
-        "corong kaca": "Untuk memindahkan cairan atau filtrasi.",
-        "batang pengaduk": "Untuk mengaduk larutan agar homogen dan menyeka.",
-        "pipet tetes": "Untuk meneteskan larutan dalam jumlah kecil.",
-        "kaca arloji": "Untuk menimbang sampel kecil atau menutup bejana.",
-        "tutup kaca": "Untuk menutup bejana agar tidak terkontaminasi dan alas menimbang bahan kimia padatan.",
-        "gelas piala 500 mL": "Gelas piala berukuran 500 mL untuk menampung, mencampur, atau memanaskan larutan.",
-        "gelas piala 100 mL": "Gelas piala kecil untuk volume larutan yang lebih sedikit.",
-        "pipet volumetrik 25 mL": "Pipet untuk mengambil volume tetap 25 mL secara sangat presisi.",
-        "pipet volumetrik 50 mL": "Pipet untuk mengambil volume tetap 50 mL secara sangat presisi.",
-        "bulb": "Karet pengisap untuk membantu mengisi pipet tanpa mulut.",
-        "kaki 3": "Penyangga logam untuk pemanasan dengan bunsen.",
-        "kasa asbes": "Kasa untuk meratakan panas saat pemanasan.",
-        "bunsen": "Pembakar gas untuk pemanasan laboratorium.",
-        "pipet mohr 10 mL": "Pipet ukur untuk mengambil volume hingga 10 mL secara bertahap.",
-        "statif": "Stand untuk menjepit buret, corong, atau alat lain.",
-        "gelas ukur 10 mL": "Gelas ukur kecil untuk mengukur volume sampai 10 mL.",
-        "gelas ukur 50 mL": "Gelas ukur untuk volume sampai 50 mL.",
-        "tabung reaksi": "Wadah reaksi skala kecil.",
-        "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tegak dan aman.",
+        "labu takar 100 mL": "Alat untuk melarutkan bahan kimia dengan volume presisi tinggi. Gunakan pada permukaan datar dan baca meniskus secara sejajar dengan mata.",
+        "buret": "Alat untuk titrasi dengan skala graduasi ketat dan kran di bawah. Pastikan bebas gelembung udara pada ujung buret sebelum dipakai.",
+        "klamp": "Digunakan untuk menjepit buret atau alat gelas lain pada statif agar posisinya stabil dan tegak lurus.",
+        "erlenmeyer 250 mL": "Wadah penampung larutan analat selama proses titrasi. Bentuk konis memudahkan pengadukan memutar (swirling) tanpa tumpah.",
+        "corong kaca": "Untuk membantu memindahkan cairan ke wadah bermulut kecil atau menyangga kertas saring pada filtrasi.",
+        "batang pengaduk": "Untuk menghomogenkan larutan padat/cair dan membantu mengalirkan cairan saat penuangan.",
+        "pipet tetes": "Untuk mengambil dan meneteskan larutan atau indikator dalam skala kecil (tetesan).",
+        "kaca arloji": "Tempat menimbang bahan kimia berupa padatan/kristal atau sebagai penutup gelas piala.",
+        "tutup kaca": "Untuk menutup bejana atau labu takar agar larutan di dalamnya terlindung dari kontaminasi udara.",
+        "gelas piala 500 mL": "Wadah preparasi untuk menampung, melarutkan, atau memanaskan larutan analat/pereaksi.",
+        "gelas piala 100 mL": "Gelas piala ukuran kecil untuk mengambil larutan indikator atau cairan dalam volume sedikit.",
+        "pipet volumetrik 25 mL": "Pipet gondok dengan tingkat akurasi tinggi untuk memindahkan tepat 25 mL larutan primer/sekunder.",
+        "pipet volumetrik 50 mL": "Pipet gondok dengan tingkat akurasi tinggi untuk memindahkan tepat 50 mL larutan.",
+        "bulb": "Karet pengisap (three-way rubber bulb) untuk menyedot larutan berbahaya dengan aman menggunakan pipet volumetrik/Mohr.",
+        "kaki 3": "Penyangga besi untuk menahan wadah gelas saat proses pemanasan larutan.",
+        "kasa asbes": "Alas perata panas di atas kaki tiga agar gelas kimia tidak retak/pecah terkena api langsung.",
+        "bunsen": "Sumber pemanas utama menggunakan bahan bakar gas untuk memanaskan larutan pereaksi.",
+        "pipet mohr 10 mL": "Pipet ukur bergraduasi untuk memindahkan larutan dengan volume bervariasi hingga maksimal 10 mL.",
+        "statif": "Tiang penyangga utama tempat memasang klamp pemegang buret.",
+        "gelas ukur 10 mL": "Mengukur volume cairan dengan tingkat ketelitian menengah (skala kasar) hingga batas 10 mL.",
+        "gelas ukur 50 mL": "Mengukur volume cairan dengan tingkat ketelitian menengah hingga batas 50 mL.",
+        "tabung reaksi": "Tempat mereaksikan zat kimia dalam skala kualitatif kecil.",
+        "rak tabung reaksi": "Tempat meletakkan tabung reaksi agar tetap tegak, tertata raki, dan mencegah risiko pecah.",
     }
 
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
@@ -542,45 +609,55 @@ if page == "Edukasi":
     st.markdown("</div>", unsafe_allow_html=True)
 
 if page == "Pengaturan":
-    st.markdown("<h1 class='section-title'>Pengaturan Sistem</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='card-box'>Hanya pihak lab yang boleh mengubah jumlah alat. Masukkan password untuk membuka akses.</div>", unsafe_allow_html=True)
+    st.markdown("<h1 class='section-title'>Pengaturan Sistem Lab</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'>Hanya laboran atau pihak berwenang yang boleh mengubah stok awal alat lab.</div>", unsafe_allow_html=True)
 
     def password_entered():
         if st.session_state.get("admin_password_input") == ADMIN_PASSWORD:
             st.session_state.settings_unlocked = True
-            del st.session_state["admin_password_input"]
         else:
+            st.error("Password salah!")
             st.session_state.settings_unlocked = False
 
     if not st.session_state.settings_unlocked:
         st.text_input("Masukkan password admin", type="password", key="admin_password_input", on_change=password_entered)
         st.warning("Akses pengaturan terkunci.")
     else:
-        st.success("Akses pengaturan berhasil dibuka.")
+        st.success("Akses panel kontrol laboran terbuka.")
         inv = get_inventory_df()
 
         cols = st.columns([2, 1])
         with cols[0]:
-            st.markdown("<div class='card-box'><div class='card-title'>Atur stok tiap alat</div></div>", unsafe_allow_html=True)
-            for alat in INVENTORY:
-                row = inv[inv["alat"] == alat]
-                current_total = int(row["total"].iloc[0]) if not row.empty else 0
-                current_avail = int(row["available"].iloc[0]) if not row.empty else 0
-                val = st.number_input(
-                    f"Total {alat}",
-                    min_value=0,
-                    max_value=100,
-                    value=current_total,
-                    key=f"set_{alat}"
-                )
-                if val != current_total:
-                    diff = int(val) - current_total
-                    new_available = max(0, min(current_avail + diff, int(val)))
-                    update_inventory_item(alat, int(val), new_available)
+            st.markdown("### 🛠️ Perbarui Total Kapasitas Alat")
+            with st.form("form_update_stok"):
+                updates = {}
+                for alat in INVENTORY:
+                    row = inv[inv["alat"] == alat]
+                    current_total = int(row["total"].iloc[0]) if not row.empty else 5
+                    current_avail = int(row["available"].iloc[0]) if not row.empty else 5
+                    
+                    val = st.number_input(
+                        f"Total {alat}",
+                        min_value=0,
+                        max_value=200,
+                        value=current_total,
+                        key=f"set_{alat}"
+                    )
+                    updates[alat] = (val, current_total, current_avail)
+                
+                btn_save_stok = st.form_submit_button("Simpan Perubahan Stok")
+                if btn_save_stok:
+                    for alat, (new_total, old_total, old_avail) in updates.items():
+                        if new_total != old_total:
+                            diff = new_total - old_total
+                            new_available = max(0, min(old_avail + diff, new_total))
+                            update_inventory_item(alat, new_total, new_available)
+                    st.success("Stok inventaris berhasil diperbarui!")
+                    st.rerun()
 
         with cols[1]:
-            st.markdown("<div class='card-box'><div class='card-title'>Reset data</div></div>", unsafe_allow_html=True)
-            if st.button("Reset semua log"):
+            st.markdown("### 🚨 Zona Bahaya")
+            if st.button("Reset Semua Log & Data"):
                 conn = get_conn()
                 cur = conn.cursor()
                 cur.execute("DELETE FROM loans")
@@ -590,4 +667,5 @@ if page == "Pengaturan":
                     cur.execute("UPDATE inventory SET total = 5, available = 5 WHERE item_name = ?", (item,))
                 conn.commit()
                 conn.close()
-                st.success("Data di-reset.")
+                st.success("Semua data logbook dan stok telah di-reset ke pengaturan awal!")
+                st.rerun()
